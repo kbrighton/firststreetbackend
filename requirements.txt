@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 Flask-Migrate
 Flask~=2.2.3
 SQLAlchemy~=2.0.9
+python-dotenv
