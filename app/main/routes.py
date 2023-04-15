@@ -93,3 +93,16 @@ def search_form():
         return redirect(url_for('main.search_result', cust=form.CUST.data, title=form.TITLE.data))
 
     return render_template("main/search.html", form=form)
+
+
+@bp.route('/search_log', methods=['POST', 'GET'])
+def search_log():
+    form = SearchLog()
+    if form.validate_on_submit():
+        order = db.session.execute(db.select(Order).filter_by(LOG=form.LOG.data)).first()
+        if order is not None:
+            return redirect(url_for('main.order_edit', log_id=form.LOG.data))
+        flash('Log number does not exist')
+        return render_template("main/search.html", form=form)
+    return render_template("main/search.html", form=form)
+

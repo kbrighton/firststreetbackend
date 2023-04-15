@@ -31,3 +31,9 @@ class SearchForm(FlaskForm):
     TITLE = StringField("Title")
     Submit = SubmitField("Submit")
 
+
+class SearchLog(FlaskForm):
+    LOG = StringField("LOG #")
+    Submit = SubmitField("Submit")
+
+
