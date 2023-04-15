@@ -1,25 +1,27 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, BooleanField, SelectField, \
     SubmitField, DateField, IntegerField
-from wtforms.validators import DataRequired, Length, Email, Regexp
+from wtforms.validators import DataRequired, Length, Email, Regexp, Optional
 from wtforms import ValidationError
 from wtforms.widgets import TextInput
 
 
 class OrderForm(FlaskForm):
-    LOG = StringField("LOG#")
-    CUST = StringField("Customer#")
-    TITLE= StringField("Title")
+    LOG = StringField("LOG#", validators=[Length(min=5,max=5)])
+    CUST = StringField("Customer#", validators=[Length(min=5,max=5)])
+    TITLE = StringField("Title")
     DATIN = DateField("Date In")
-    ARTOUT = DateField("Art Due Out")
-    DUEOUT = DateField("Order Due Out")
-    PRINT_N = IntegerField("Quantity")
-    ARTLO = StringField("Art Log")
+    ARTOUT = DateField("Art Due Out", validators=[Optional()])
+    DUEOUT = DateField("Order Due Out", validators=[Optional()])
+    PRINT_N = IntegerField("Quantity", validators=[Optional()])
+    ARTLO = StringField("Art Log", validators=[Optional()])
     RUSH = BooleanField("RUSH?")
-    PRIOR = IntegerField("Priority")
-    LOGTYPE=StringField("Log Type")
-    COLORF = IntegerField("# of Colors")
-    REF_ARTLO = StringField("Art Reference")
+    PRIOR = IntegerField("Priority", validators=[Optional()])
+    LOGTYPE=StringField("Log Type", validators=[Length(min=2,max=2)])
+    COLORF = IntegerField("# of Colors", validators=[Optional()])
+    REF_ARTLO = StringField("Art Reference", validators=[Length(min=5,max=5)])
+    HOWSHIP = IntegerField("How Shipped", validators=[Optional()])
+    DATOUT = DateField("DATOUT", validators=[Optional()])
 
     Submit = SubmitField("Submit")
 
