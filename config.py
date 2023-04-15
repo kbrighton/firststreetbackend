@@ -10,6 +10,9 @@ class Config(object):
     CSRF_ENABLED = True
     SECRET_KEY = 'thisisatestthing'
     SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
+    BOOTSTRAP_BOOTSWATCH_THEME = 'lumen'
+    WTF_CSRF_CHECK_DEFAULT = False
+
 
 
 class ProductionConfig(Config):

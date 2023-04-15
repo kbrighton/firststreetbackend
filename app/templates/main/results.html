@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% from 'bootstrap5/form.html' import render_form %}
+{% from 'bootstrap5/pagination.html' import render_pager, render_pagination %}
+
+{% block content %}
+    <h2>Order Form</h2>
+    {{ render_form(form) }}
+
+    {{ render_pagination(pagination) }}
+
+
+{% endblock %}

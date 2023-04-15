@@ -29,7 +29,7 @@ class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     def __repr__(self):
-        return f'<Post "{self.Customer}">'
+        return f'<Customer "{self.Customer}">'
 
 
 class Order(db.Model):
@@ -164,7 +164,7 @@ class Order(db.Model):
     ARTO_9 = db.Column(db.DateTime(True))
     LUPD = db.Column(db.DateTime(True))
     ORIGPR = db.Column(db.String(1))
-    RUSH = db.Column(db.Integer)
+    RUSH = db.Column(db.Boolean())
     LATE = db.Column(db.Float(53))
     TIMEOUT = db.Column(db.String(8))
     TIMEIN = db.Column(db.String(8))
@@ -172,5 +172,5 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     def __repr__(self):
-        return f'<Post "{self.LOG}">'
+        return f'<Order "{self.LOG}">'
 

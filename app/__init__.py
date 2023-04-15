@@ -2,7 +2,7 @@ from flask import Flask
 from flask_bootstrap import Bootstrap5
 
 from config import Config
-from app.extensions import db, migrate
+from app.extensions import db, migrate,bootstrap
 
 
 def create_app(config_class=Config):
@@ -14,7 +14,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app,db)
 
-    bootstrap = Bootstrap5(app)
+    bootstrap.init_app(app)
 
 
     # Register blueprints here
