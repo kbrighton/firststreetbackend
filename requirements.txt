@@ -2,6 +2,8 @@ psycopg2~=2.9.6
 Flask-SQLAlchemy
 Flask-Migrate
 Flask-WTF
+Flask-Login
+werkzeug
 Flask~=2.2.3
 SQLAlchemy~=2.0.9
 bootstrap-flask

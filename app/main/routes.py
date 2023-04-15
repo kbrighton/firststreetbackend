@@ -5,14 +5,17 @@ from app.extensions import db
 from app.models import Customer, Order
 from .forms import *
 from sqlalchemy import and_
+from flask_login import current_user, login_required
 
 
 @bp.route('/')
+@login_required
 def index():
     return render_template("main/index.html")
 
 
 @bp.route('/order/<log_id>', methods=['POST', 'GET'])
+@login_required
 def order_edit(log_id):
     order = db.session.execute(db.select(Order).filter_by(LOG=log_id)).scalar_one()
     form = OrderForm(obj=order)
@@ -21,6 +24,7 @@ def order_edit(log_id):
 
 
 @bp.route('/order/<cust>/<title>', methods=['POST', 'GET'])
+@login_required
 def search_result(cust, title):
     cust = cust
     title = title
@@ -55,6 +59,7 @@ def search_result(cust, title):
 
 
 @bp.route('/order', methods=['POST', 'GET'])
+@login_required
 def new_order():
     form = OrderForm()
     if request.method == 'POST' and form.validate_on_submit():
@@ -87,6 +92,7 @@ def new_order():
 
 
 @bp.route('/search', methods=['POST', 'GET'])
+@login_required
 def search_form():
     form = SearchForm()
     if form.validate_on_submit():
@@ -96,6 +102,7 @@ def search_form():
 
 
 @bp.route('/search_log', methods=['POST', 'GET'])
+@login_required
 def search_log():
     form = SearchLog()
     if form.validate_on_submit():

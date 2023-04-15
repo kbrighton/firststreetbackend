@@ -2,7 +2,7 @@ from flask import Flask
 from flask_bootstrap import Bootstrap5
 
 from config import Config
-from app.extensions import db, migrate,bootstrap
+from app.extensions import db, migrate,bootstrap,login
 
 
 def create_app(config_class=Config):
@@ -15,11 +15,16 @@ def create_app(config_class=Config):
     migrate.init_app(app,db)
 
     bootstrap.init_app(app)
+    login.init_app(app)
 
 
     # Register blueprints here
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
+
+    from app.auth import bp as auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+
 
     @app.route('/test/')
     def test_page():
