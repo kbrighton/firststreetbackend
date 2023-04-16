@@ -1,11 +1,11 @@
-from flask import render_template, session, redirect, url_for, request, flash
+from flask import render_template, redirect, url_for, request, flash
+from flask_login import login_required
+from sqlalchemy import and_, or_
 
-from app.main import bp
 from app.extensions import db
-from app.models import Customer, Order
+from app.main import bp
+from app.models import Order
 from .forms import *
-from sqlalchemy import and_
-from flask_login import current_user, login_required
 
 
 @bp.route('/')
@@ -113,3 +113,37 @@ def search_log():
         return render_template("main/search.html", form=form)
     return render_template("main/search.html", form=form)
 
+
+@bp.route('/dueouts', methods=['POST', 'GET'])
+@login_required
+def view_dueouts():
+    form = DisplayDueouts()
+    if form.validate_on_submit():
+
+        duesql = db.select(Order).where(
+            and_(
+                or_(Order.LOGTYPE == "TR", Order.LOGTYPE == "DP"),
+                Order.DATOUT == None,
+                Order.DUEOUT == form.Date.data,
+            )
+        )
+        dueouts = db.session.execute(duesql).scalars()
+        titles = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE','Title'), ('PRIOR', 'Priority'), ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'), ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
+        data = []
+        for due in dueouts:
+            data.append({
+                'Log': due.LOG,
+                'ARTLO': due.ARTLO,
+                'CUST': due.CUST,
+                'TITLE': due.TITLE,
+                'PRIOR': due.PRIOR,
+                'DATIN': due.DATIN,
+                'DUEOUT': due.DUEOUT,
+                'COLORF': due.COLORF,
+                'PRINTN': due.PRINT_N,
+                'LOGTYPE': due.LOGTYPE,
+                'RUSHN': due.RUSH_N,
+                'DATOUT': due.DATOUT
+            })
+        return render_template('main/dueouttable.html', titles=titles, data=data)
+    return render_template("main/dueoutform.html", form=form)

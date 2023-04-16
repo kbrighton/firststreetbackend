@@ -1,7 +1,8 @@
 # coding: utf-8
-from app.extensions import db, login
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+
+from app.extensions import db, login
 
 
 class Customer(db.Model):
@@ -196,4 +197,3 @@ class User(UserMixin, db.Model):
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
-

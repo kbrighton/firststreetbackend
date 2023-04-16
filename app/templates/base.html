@@ -13,9 +13,11 @@
             background: #ddd;
             padding: 10px;
         }
+
         h2 {
             margin-top: 20px;
         }
+
         footer {
             margin: 20px;
         }
@@ -32,13 +34,12 @@
             <ul class="navbar-nav mr-auto">
                 {{ render_nav_item('main.index', 'Home') }}
                 {% if current_user.is_authenticated %}
-                {{ render_nav_item('main.search_form', 'Search Form') }}
-                {{ render_nav_item('main.search_log', 'Search Log') }}
-                {{ render_nav_item('main.new_order', 'New Order') }}
+                    {{ render_nav_item('main.search_form', 'Search Form') }}
+                    {{ render_nav_item('main.search_log', 'Search Log') }}
+                    {{ render_nav_item('main.new_order', 'New Order') }}
+                    {{ render_nav_item('main.view_dueouts', 'Due Outs') }}
+                    {{ render_nav_item('auth.logout', 'Logout') }}
                 {% endif %}
-                <li class="nav-item"><a class="nav-link" href="https://bootstrap-flask.readthedocs.io/" target="_blank">Documentation</a></li>
-                <li class="nav-item"><a class="nav-link" href="https://getbootstrap.com/docs/5.1/getting-started/introduction/" target="_blank">Bootstrap Documentation</a></li>
-                <li class="nav-item"><a class="nav-link" href="https://github.com/helloflask/bootstrap-flask" target="_blank">GitHub</a></li>
             </ul>
         </div>
     </div>
@@ -51,7 +52,9 @@
 
 <footer class="text-center">
     {% block footer %}
-        <small> &copy; <script>document.write(new Date().getFullYear())</script> <a href="https://github.com/kbrighton">Nick Burtner</a>
+        <small> &copy;
+            <script>document.write(new Date().getFullYear())</script>
+            <a href="https://github.com/kbrighton">Nick Burtner</a>
         </small>
     {% endblock %}
 </footer>

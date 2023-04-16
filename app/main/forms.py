@@ -1,9 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, BooleanField, SelectField, \
-    SubmitField, DateField, IntegerField
-from wtforms.validators import DataRequired, Length, Email, Regexp, Optional
-from wtforms import ValidationError
-from wtforms.widgets import TextInput
+from wtforms import StringField, BooleanField, SubmitField, DateField, IntegerField
+from wtforms.validators import Length, Optional
 
 
 class OrderForm(FlaskForm):
@@ -34,4 +31,9 @@ class SearchForm(FlaskForm):
 
 class SearchLog(FlaskForm):
     LOG = StringField("LOG #")
+    Submit = SubmitField("Submit")
+
+
+class DisplayDueouts(FlaskForm):
+    Date = DateField("Due Outs Date")
     Submit = SubmitField("Submit")

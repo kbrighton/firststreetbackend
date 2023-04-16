@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% from 'bootstrap5/table.html' import render_table %}
+
+{% block content %}
+<h2>Due Outs</h2>
+
+{{ render_table(data, titles, table_classes='table-striped', header_classes='thead-dark', caption='Due Outs') }}
+
+{% endblock %}
