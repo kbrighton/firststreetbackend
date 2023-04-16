@@ -7,8 +7,8 @@ from wtforms.widgets import TextInput
 
 
 class OrderForm(FlaskForm):
-    LOG = StringField("LOG#", validators=[Length(min=5,max=5)])
-    CUST = StringField("Customer#", validators=[Length(min=5,max=5)])
+    LOG = StringField("LOG#", validators=[Length(min=5, max=5)])
+    CUST = StringField("Customer#", validators=[Length(min=5, max=5)])
     TITLE = StringField("Title")
     DATIN = DateField("Date In")
     ARTOUT = DateField("Art Due Out", validators=[Optional()])
@@ -17,9 +17,9 @@ class OrderForm(FlaskForm):
     ARTLO = StringField("Art Log", validators=[Optional()])
     RUSH = BooleanField("RUSH?")
     PRIOR = IntegerField("Priority", validators=[Optional()])
-    LOGTYPE=StringField("Log Type", validators=[Length(min=2,max=2)])
+    LOGTYPE = StringField("Log Type", validators=[Length(min=2, max=2)])
     COLORF = IntegerField("# of Colors", validators=[Optional()])
-    REF_ARTLO = StringField("Art Reference", validators=[Length(min=5,max=5)])
+    REF_ARTLO = StringField("Art Reference", validators=[Length(min=5, max=5)])
     HOWSHIP = IntegerField("How Shipped", validators=[Optional()])
     DATOUT = DateField("DATOUT", validators=[Optional()])
 
@@ -35,5 +35,3 @@ class SearchForm(FlaskForm):
 class SearchLog(FlaskForm):
     LOG = StringField("LOG #")
     Submit = SubmitField("Submit")
-
-
