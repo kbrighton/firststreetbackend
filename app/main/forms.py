@@ -16,7 +16,7 @@ class OrderForm(FlaskForm):
     PRIOR = IntegerField("Priority", validators=[Optional()])
     LOGTYPE = StringField("Log Type", validators=[Length(min=2, max=2)])
     COLORF = IntegerField("# of Colors", validators=[Optional()])
-    REF_ARTLO = StringField("Art Reference", validators=[Length(min=5, max=5)])
+    REF_ARTLO = StringField("Art Reference", validators=[Optional(),Length(min=5, max=5)])
     HOWSHIP = IntegerField("How Shipped", validators=[Optional()])
     DATOUT = DateField("DATOUT", validators=[Optional()])
 

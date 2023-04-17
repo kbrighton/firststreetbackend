@@ -59,15 +59,15 @@ def search_result(cust, title):
     form = OrderForm(obj=order.pop())
     if request.method == 'POST' and form.validate_on_submit():
         order = db.session.execute(db.select(Order).filter_by(LOG=form.LOG.data)).scalar_one()
-        order.CUST = form.CUST.data
-        order.TITLE = form.TITLE.data
+        order.CUST = form.CUST.data.upper()
+        order.TITLE = form.TITLE.data.upper()
         order.DATIN = form.DATIN.data
         order.ARTOUT = form.ARTOUT.data
         order.DUEOUT = form.DUEOUT.data
         order.PRINT_N = form.PRINT_N.data
-        order.ARTLO = form.ARTLO.data
+        order.ARTLO = form.ARTLO.data.upper()
         order.PRIOR = form.PRIOR.data
-        order.LOGTYPE = form.LOGTYPE.data
+        order.LOGTYPE = form.LOGTYPE.data.upper()
         order.COLORF = form.COLORF.data
         order.REF_ARTLO = form.REF_ARTLO.data
         order.HOWSHIP = form.HOWSHIP.data
@@ -87,16 +87,16 @@ def new_order():
         order = db.session.execute(db.select(Order).filter_by(LOG=form.LOG.data)).first()
         if order is None:
             order = Order()
-            order.LOG = form.LOG.data
-            order.CUST = form.CUST.data
-            order.TITLE = form.TITLE.data
+            order.LOG = form.LOG.data.upper()
+            order.CUST = form.CUST.data.upper()
+            order.TITLE = form.TITLE.data.upper()
             order.DATIN = form.DATIN.data
             order.ARTOUT = form.ARTOUT.data
             order.DUEOUT = form.DUEOUT.data
             order.PRINT_N = form.PRINT_N.data
-            order.ARTLO = form.ARTLO.data
+            order.ARTLO = form.ARTLO.data.upper()
             order.PRIOR = form.PRIOR.data
-            order.LOGTYPE = form.LOGTYPE.data
+            order.LOGTYPE = form.LOGTYPE.data.upper()
             order.COLORF = form.COLORF.data
             order.REF_ARTLO = form.REF_ARTLO.data
             order.HOWSHIP = form.HOWSHIP.data
