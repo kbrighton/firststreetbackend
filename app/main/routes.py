@@ -5,8 +5,11 @@ from sqlalchemy import and_, or_
 from app.extensions import db
 from app.main import bp
 from app.models import Order
-from .forms import *
+from .forms import OrderForm, SearchForm, SearchLog, DisplayDueouts
 
+ORDER_EDIT = "main.order_edit"
+ORDERS = "main/orders.html"
+SEARCH = "main/search.html"
 
 @bp.route('/')
 @login_required
@@ -35,16 +38,13 @@ def order_edit(log_id):
         order.DATOUT = form.DATOUT.data
 
         db.session.commit()
-        return redirect(url_for('main.order_edit', log_id=order.LOG))
-    return render_template("main/orders.html", form=form)
+        return redirect(url_for(ORDER_EDIT, log_id=order.LOG))
+    return render_template(ORDERS, form=form)
 
 
 @bp.route('/order/<cust>/<title>', methods=['POST', 'GET'])
 @login_required
 def search_result(cust, title):
-    cust = cust
-    title = title
-
     clauses = [Order.CUST.like(f'%{cust}%'), Order.TITLE.like(f'%{title}%')]
     orders_list = db.select(Order).where(and_(*clauses))
 
@@ -69,7 +69,7 @@ def search_result(cust, title):
         order.DATOUT = form.DATOUT.data
 
         db.session.commit()
-        return redirect(url_for('main.order_edit', log_id=order.LOG))
+        return redirect(url_for(ORDER_EDIT, log_id=order.LOG))
 
     return render_template("main/results.html", pagination=pagination, form=form)
 
@@ -99,12 +99,12 @@ def new_order():
 
             db.session.add(order)
             db.session.commit()
-            return redirect(url_for('main.order_edit', log_id=order.LOG))
+            return redirect(url_for(ORDER_EDIT, log_id=order.LOG))
         else:
             flash("That LOG Number already exists")
-            return render_template("main/orders.html", form=form)
+            return render_template(ORDERS, form=form)
 
-    return render_template("main/orders.html", form=form)
+    return render_template(ORDERS, form=form)
 
 
 @bp.route('/search', methods=['POST', 'GET'])
@@ -114,7 +114,7 @@ def search_form():
     if form.validate_on_submit():
         return redirect(url_for('main.search_result', cust=form.CUST.data, title=form.TITLE.data))
 
-    return render_template("main/search.html", form=form)
+    return render_template(SEARCH, form=form)
 
 
 @bp.route('/search_log', methods=['POST', 'GET'])
@@ -124,10 +124,10 @@ def search_log():
     if form.validate_on_submit():
         order = db.session.execute(db.select(Order).filter_by(LOG=form.LOG.data)).first()
         if order is not None:
-            return redirect(url_for('main.order_edit', log_id=form.LOG.data))
+            return redirect(url_for(ORDER_EDIT, log_id=form.LOG.data))
         flash('Log number does not exist')
-        return render_template("main/search.html", form=form)
-    return render_template("main/search.html", form=form)
+        return render_template(SEARCH, form=form)
+    return render_template(SEARCH, form=form)
 
 
 @bp.route('/dueouts', methods=['POST', 'GET'])
