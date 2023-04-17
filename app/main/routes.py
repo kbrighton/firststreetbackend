@@ -19,7 +19,23 @@ def index():
 def order_edit(log_id):
     order = db.session.execute(db.select(Order).filter_by(LOG=log_id)).scalar_one()
     form = OrderForm(obj=order)
+    if request.method == 'POST' and form.validate_on_submit():
+        order.CUST = form.CUST.data
+        order.TITLE = form.TITLE.data
+        order.DATIN = form.DATIN.data
+        order.ARTOUT = form.ARTOUT.data
+        order.DUEOUT = form.DUEOUT.data
+        order.PRINT_N = form.PRINT_N.data
+        order.ARTLO = form.ARTLO.data
+        order.PRIOR = form.PRIOR.data
+        order.LOGTYPE = form.LOGTYPE.data
+        order.COLORF = form.COLORF.data
+        order.REF_ARTLO = form.REF_ARTLO.data
+        order.HOWSHIP = form.HOWSHIP.data
+        order.DATOUT = form.DATOUT.data
 
+        db.session.commit()
+        return redirect(url_for('main.order_edit', log_id=order.LOG))
     return render_template("main/orders.html", form=form)
 
 
