@@ -42,15 +42,20 @@ def order_edit(log_id):
     return render_template(ORDERS, form=form)
 
 
-@bp.route('/order/<cust>/<title>', methods=['POST', 'GET'])
+@bp.route('/order/<string:cust>/<string:title>', methods=['POST', 'GET'])
 @login_required
 def search_result(cust, title):
-    clauses = [Order.CUST.like(f'%{cust}%'), Order.TITLE.like(f'%{title}%')]
+    clauses = [Order.CUST.ilike(f'%{cust}%'), Order.TITLE.ilike(f'%{title}%')]
     orders_list = db.select(Order).where(and_(*clauses))
 
     page = request.args.get('page', 1, type=int)
     pagination = db.paginate(orders_list, page=page, per_page=1)
     order = pagination.items
+    if not order:
+        flash("Could not find any orders that match")
+
+        return redirect(url_for("main.search_form"))
+
     form = OrderForm(obj=order.pop())
     if request.method == 'POST' and form.validate_on_submit():
         order = db.session.execute(db.select(Order).filter_by(LOG=form.LOG.data)).scalar_one()

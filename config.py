@@ -20,6 +20,7 @@ class Config(object):
 
     @staticmethod
     def init_app(app):
+        #This is an abstract method
         pass
 
 
