@@ -42,10 +42,18 @@ def order_edit(log_id):
     return render_template(ORDERS, form=form)
 
 
-@bp.route('/order/<string:cust>/<string:title>', methods=['POST', 'GET'])
+@bp.route('/order/<path:path>', methods=['POST', 'GET'])
 @login_required
-def search_result(cust, title):
-    clauses = [Order.CUST.ilike(f'%{cust}%'), Order.TITLE.ilike(f'%{title}%')]
+def search_result(path):
+    print(path)
+    _, cust, _, title = path.split("/")
+    clauses = []
+    if cust:
+        clauses.append(Order.CUST.ilike(f'%{cust}%'))
+
+    if title:
+        clauses.append(Order.TITLE.ilike(f'%{title}%'))
+
     orders_list = db.select(Order).where(and_(*clauses))
 
     page = request.args.get('page', 1, type=int)
@@ -117,7 +125,8 @@ def new_order():
 def search_form():
     form = SearchForm()
     if form.validate_on_submit():
-        return redirect(url_for('main.search_result', cust=form.CUST.data, title=form.TITLE.data))
+        path = "/".join(["cust", form.CUST.data, "title", form.TITLE.data])
+        return redirect(url_for('main.search_result', path=path))
 
     return render_template(SEARCH, form=form)
 
