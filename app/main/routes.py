@@ -42,11 +42,13 @@ def order_edit(log_id):
     return render_template(ORDERS, form=form)
 
 
-@bp.route('/order/<path:path>', methods=['POST', 'GET'])
+@bp.route('/order_search/', methods=['POST', 'GET'])
 @login_required
-def search_result(path):
-    print(path)
-    _, cust, _, title = path.split("/")
+def search_result():
+    print(request)
+
+    cust = request.args.get('cust')
+    title = request.args.get('title')
     clauses = []
     if cust:
         clauses.append(Order.CUST.ilike(f'%{cust}%'))
@@ -54,37 +56,35 @@ def search_result(path):
     if title:
         clauses.append(Order.TITLE.ilike(f'%{title}%'))
 
-    orders_list = db.select(Order).where(and_(*clauses))
+    orders_list = db.select(Order).where(and_(*clauses)).order_by(Order.DATIN.desc(),Order.CUST.desc())
 
     page = request.args.get('page', 1, type=int)
-    pagination = db.paginate(orders_list, page=page, per_page=1)
-    order = pagination.items
-    if not order:
+    pagination = db.paginate(orders_list, page=page, per_page=20)
+    orders = pagination.items
+    if not orders:
         flash("Could not find any orders that match")
 
         return redirect(url_for("main.search_form"))
 
-    form = OrderForm(obj=order.pop())
-    if request.method == 'POST' and form.validate_on_submit():
-        order = db.session.execute(db.select(Order).filter_by(LOG=form.LOG.data)).scalar_one()
-        order.CUST = form.CUST.data.upper()
-        order.TITLE = form.TITLE.data.upper()
-        order.DATIN = form.DATIN.data
-        order.ARTOUT = form.ARTOUT.data
-        order.DUEOUT = form.DUEOUT.data
-        order.PRINT_N = form.PRINT_N.data
-        order.ARTLO = form.ARTLO.data.upper()
-        order.PRIOR = form.PRIOR.data
-        order.LOGTYPE = form.LOGTYPE.data.upper()
-        order.COLORF = form.COLORF.data
-        order.REF_ARTLO = form.REF_ARTLO.data
-        order.HOWSHIP = form.HOWSHIP.data
-        order.DATOUT = form.DATOUT.data
-
-        db.session.commit()
-        return redirect(url_for(ORDER_EDIT, log_id=order.LOG))
-
-    return render_template("main/results.html", pagination=pagination, form=form)
+    titles = [('LOG', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE','Title'), ('PRIOR', 'Priority'), ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'), ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
+    data = [
+        {
+            'LOG': order.LOG,
+            'ARTLO': order.ARTLO,
+            'CUST': order.CUST,
+            'TITLE': order.TITLE,
+            'PRIOR': order.PRIOR,
+            'DATIN': order.DATIN,
+            'DUEOUT': order.DUEOUT,
+            'COLORF': order.COLORF,
+            'PRINTN': order.PRINT_N,
+            'LOGTYPE': order.LOGTYPE,
+            'RUSHN': order.RUSH_N,
+            'DATOUT': order.DATOUT,
+        }
+        for order in orders
+    ]
+    return render_template("main/resultstable.html", pagination=pagination, data=data, titles = titles, Order=Order)
 
 
 @bp.route('/order', methods=['POST', 'GET'])
@@ -125,8 +125,7 @@ def new_order():
 def search_form():
     form = SearchForm()
     if form.validate_on_submit():
-        path = "/".join(["cust", form.CUST.data, "title", form.TITLE.data])
-        return redirect(url_for('main.search_result', path=path))
+        return redirect(url_for('main.search_result', cust=form.CUST.data, title=form.TITLE.data))
 
     return render_template(SEARCH, form=form)
 
@@ -156,6 +155,8 @@ def view_dueouts():
                 Order.DATOUT == None,
                 Order.DUEOUT == form.Date.data,
             )
+        ).order_by(
+            Order.DUEOUT.desc()
         )
         dueouts = db.session.execute(duesql).scalars()
         titles = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE','Title'), ('PRIOR', 'Priority'), ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'), ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]

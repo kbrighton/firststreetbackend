@@ -38,7 +38,7 @@ class Customer(db.Model):
 class Order(db.Model):
     __tablename__ = 'Orders'
 
-    LOG = db.Column(db.String(7))
+    LOG = db.Column(db.String(7), primary_key=True)
     CUST = db.Column(db.String(5))
     CUST_P_0 = db.Column(db.String(8))
     PRIOR = db.Column(db.String(1))
@@ -172,7 +172,6 @@ class Order(db.Model):
     TIMEOUT = db.Column(db.String(8))
     TIMEIN = db.Column(db.String(8))
     OUT = db.Column(db.Float(53))
-    id = db.Column(db.Integer, primary_key=True)
 
     def __repr__(self):
         return f'<Order "{self.LOG}">'

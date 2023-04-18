@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% from 'bootstrap5/table.html' import render_table %}
+{% from 'bootstrap5/pagination.html' import render_pager, render_pagination %}
+
+
+{% block content %}
+<h2>Search</h2>
+
+{{ render_table(data, titles, model=Order, primary_key="LOG", table_classes='table-striped', header_classes='thead-dark', caption='Searches', show_actions=True, edit_url=('main.order_edit', [('log_id', ':LOG')])) }}
+
+{{ render_pagination(pagination) }}
+
+{% endblock %}
