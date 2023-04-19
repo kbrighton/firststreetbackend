@@ -121,7 +121,7 @@ class Order(db.Model):
     P7 = db.Column(db.Float(53))
     P8 = db.Column(db.Float(53))
     P9 = db.Column(db.Float(53))
-    TITLE = db.Column(db.String(48))
+    TITLE = db.Column(db.String(256))
     LET_STYLE = db.Column(db.String(5))
     REF_ARTLO = db.Column(db.String(5))
     ARTPAG = db.Column(db.String(3))
