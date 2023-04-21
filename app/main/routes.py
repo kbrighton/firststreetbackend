@@ -178,3 +178,37 @@ def view_dueouts():
             })
         return render_template('main/dueouttable.html', titles=titles, data=data)
     return render_template("main/dueoutform.html", form=form)
+
+@bp.route('/dueouts_all', methods=['POST', 'GET'])
+@login_required
+def all_dueouts():
+    duesql = db.select(Order).where(
+        and_(
+        or_(Order.LOGTYPE == "TR", Order.LOGTYPE == "DP"),
+            Order.DATOUT == None,
+        ),
+        Order.DUEOUT != None
+    ).order_by(
+        Order.DUEOUT.desc()
+    )
+    dueouts = db.session.execute(duesql).scalars()
+    titles = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE','Title'), ('PRIOR', 'Priority'), ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'), ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
+    data = []
+    for due in dueouts:
+        data.append({
+            'Log': due.LOG,
+            'ARTLO': due.ARTLO,
+            'CUST': due.CUST,
+            'TITLE': due.TITLE,
+            'PRIOR': due.PRIOR,
+            'DATIN': due.DATIN,
+            'DUEOUT': due.DUEOUT,
+            'COLORF': due.COLORF,
+            'PRINTN': due.PRINT_N,
+            'LOGTYPE': due.LOGTYPE,
+            'RUSHN': due.RUSH_N,
+            'DATOUT': due.DATOUT
+        })
+    return render_template('main/dueouttable.html', titles=titles, data=data)
+
+
