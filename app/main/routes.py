@@ -5,6 +5,7 @@ from sqlalchemy import and_, or_
 from app.extensions import db
 from app.main import bp
 from app.models import Order
+from app.schema import OrderSchema,order_schema,orders_schema
 from .forms import OrderForm, SearchForm, SearchLog, DisplayDueouts
 
 ORDER_EDIT = "main.order_edit"
@@ -67,23 +68,8 @@ def search_result():
         return redirect(url_for("main.search_form"))
 
     titles = [('LOG', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE','Title'), ('PRIOR', 'Priority'), ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'), ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
-    data = [
-        {
-            'LOG': order.LOG,
-            'ARTLO': order.ARTLO,
-            'CUST': order.CUST,
-            'TITLE': order.TITLE,
-            'PRIOR': order.PRIOR,
-            'DATIN': order.DATIN,
-            'DUEOUT': order.DUEOUT,
-            'COLORF': order.COLORF,
-            'PRINTN': order.PRINT_N,
-            'LOGTYPE': order.LOGTYPE,
-            'RUSHN': order.RUSH_N,
-            'DATOUT': order.DATOUT,
-        }
-        for order in orders
-    ]
+    data = orders_schema.dump(orders)
+
     return render_template("main/resultstable.html", pagination=pagination, data=data, titles = titles, Order=Order)
 
 
@@ -160,21 +146,7 @@ def view_dueouts():
         )
         dueouts = db.session.execute(duesql).scalars()
         titles = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE','Title'), ('PRIOR', 'Priority'), ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'), ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
-        data = []
-        for due in dueouts:
-            data.append({
-                'Log': due.LOG,
-                'ARTLO': due.ARTLO,
-                'CUST': due.CUST,
-                'TITLE': due.TITLE,
-                'PRIOR': due.PRIOR,
-                'DATIN': due.DATIN,
-                'DUEOUT': due.DUEOUT,
-                'COLORF': due.COLORF,
-                'PRINTN': due.PRINT_N,
-                'LOGTYPE': due.LOGTYPE,
-                'RUSHN': due.RUSH_N,
-                'DATOUT': due.DATOUT
-            })
+        data = orders_schema.dump(dueouts)
+
         return render_template('main/dueouttable.html', titles=titles, data=data)
     return render_template("main/dueoutform.html", form=form)
