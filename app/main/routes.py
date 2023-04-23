@@ -1,3 +1,5 @@
+from typing import List, Tuple, Any
+
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required
 from sqlalchemy import and_, or_
@@ -11,6 +13,9 @@ from .forms import OrderForm, SearchForm, SearchLog, DisplayDueouts
 ORDER_EDIT = "main.order_edit"
 ORDERS = "main/orders.html"
 SEARCH = "main/search.html"
+DUEOUT_TITLES: list[tuple[str, str] | Any] = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
+                 ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'),
+                 ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
 
 
 @bp.route('/')
@@ -66,9 +71,7 @@ def search_result():
 
         return redirect(url_for("main.search_form"))
 
-    titles = [('LOG', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
-              ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'),
-              ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
+    titles = DUEOUT_TITLES
     data = orders_schema.dump(orders)
 
     return render_template("main/resultstable.html", pagination=pagination, data=data, titles=titles, Order=Order)
@@ -147,9 +150,7 @@ def view_dueouts():
             .order_by(Order.DUEOUT.desc())
         )
         dueouts = db.session.execute(duesql).scalars()
-        titles = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
-                  ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'),
-                  ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
+        titles = DUEOUT_TITLES
         data = orders_schema.dump(dueouts)
 
         return render_template('main/dueouttable.html', titles=titles, data=data)
@@ -171,8 +172,6 @@ def all_dueouts():
         .order_by(Order.DUEOUT.desc())
     )
     dueouts = db.session.execute(duesql).scalars()
-    titles = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
-              ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'),
-              ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
+    titles = DUEOUT_TITLES
     data = orders_schema.dump(dueouts)
     return render_template('main/dueouttable.html', titles=titles, data=data)
