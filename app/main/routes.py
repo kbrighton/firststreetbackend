@@ -5,12 +5,13 @@ from sqlalchemy import and_, or_
 from app.extensions import db
 from app.main import bp
 from app.models import Order
-from app.schema import OrderSchema,order_schema,orders_schema
+from app.schema import OrderSchema, order_schema, orders_schema
 from .forms import OrderForm, SearchForm, SearchLog, DisplayDueouts
 
 ORDER_EDIT = "main.order_edit"
 ORDERS = "main/orders.html"
 SEARCH = "main/search.html"
+
 
 @bp.route('/')
 @login_required
@@ -46,8 +47,6 @@ def order_edit(log_id):
 @bp.route('/order_search/', methods=['POST', 'GET'])
 @login_required
 def search_result():
-    print(request)
-
     cust = request.args.get('cust')
     title = request.args.get('title')
     clauses = []
@@ -57,7 +56,7 @@ def search_result():
     if title:
         clauses.append(Order.TITLE.ilike(f'%{title}%'))
 
-    orders_list = db.select(Order).where(and_(*clauses)).order_by(Order.DATIN.desc(),Order.CUST.desc())
+    orders_list = db.select(Order).where(and_(*clauses)).order_by(Order.DATIN.desc(), Order.CUST.desc())
 
     page = request.args.get('page', 1, type=int)
     pagination = db.paginate(orders_list, page=page, per_page=20)
@@ -67,10 +66,12 @@ def search_result():
 
         return redirect(url_for("main.search_form"))
 
-    titles = [('LOG', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE','Title'), ('PRIOR', 'Priority'), ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'), ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
+    titles = [('LOG', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
+              ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'),
+              ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
     data = orders_schema.dump(orders)
 
-    return render_template("main/resultstable.html", pagination=pagination, data=data, titles = titles, Order=Order)
+    return render_template("main/resultstable.html", pagination=pagination, data=data, titles=titles, Order=Order)
 
 
 @bp.route('/order', methods=['POST', 'GET'])
@@ -134,53 +135,44 @@ def search_log():
 def view_dueouts():
     form = DisplayDueouts()
     if form.validate_on_submit():
-
-        duesql = db.select(Order).where(
-            and_(
-                or_(Order.LOGTYPE == "TR", Order.LOGTYPE == "DP"),
-                Order.DATOUT == None,
-                Order.DUEOUT == form.Date.data,
+        duesql = (
+            db.select(Order)
+            .where(
+                and_(
+                    or_(Order.LOGTYPE == "TR", Order.LOGTYPE == "DP"),
+                    Order.DATOUT == None,
+                    Order.DUEOUT == form.Date.data,
+                )
             )
-        ).order_by(
-            Order.DUEOUT.desc()
+            .order_by(Order.DUEOUT.desc())
         )
         dueouts = db.session.execute(duesql).scalars()
-        titles = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE','Title'), ('PRIOR', 'Priority'), ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'), ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
+        titles = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
+                  ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'),
+                  ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
         data = orders_schema.dump(dueouts)
 
         return render_template('main/dueouttable.html', titles=titles, data=data)
     return render_template("main/dueoutform.html", form=form)
 
+
 @bp.route('/dueouts_all', methods=['POST', 'GET'])
 @login_required
 def all_dueouts():
-    duesql = db.select(Order).where(
-        and_(
-        or_(Order.LOGTYPE == "TR", Order.LOGTYPE == "DP"),
-            Order.DATOUT == None,
-        ),
-        Order.DUEOUT != None
-    ).order_by(
-        Order.DUEOUT.desc()
+    duesql = (
+        db.select(Order)
+        .where(
+            and_(
+                or_(Order.LOGTYPE == "TR", Order.LOGTYPE == "DP"),
+                Order.DATOUT == None,
+            ),
+            Order.DUEOUT != None,
+        )
+        .order_by(Order.DUEOUT.desc())
     )
     dueouts = db.session.execute(duesql).scalars()
-    titles = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE','Title'), ('PRIOR', 'Priority'), ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'), ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
-    data = []
-    for due in dueouts:
-        data.append({
-            'Log': due.LOG,
-            'ARTLO': due.ARTLO,
-            'CUST': due.CUST,
-            'TITLE': due.TITLE,
-            'PRIOR': due.PRIOR,
-            'DATIN': due.DATIN,
-            'DUEOUT': due.DUEOUT,
-            'COLORF': due.COLORF,
-            'PRINTN': due.PRINT_N,
-            'LOGTYPE': due.LOGTYPE,
-            'RUSHN': due.RUSH_N,
-            'DATOUT': due.DATOUT
-        })
+    titles = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
+              ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'),
+              ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
+    data = orders_schema.dump(dueouts)
     return render_template('main/dueouttable.html', titles=titles, data=data)
-
-
