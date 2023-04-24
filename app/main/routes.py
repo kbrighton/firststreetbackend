@@ -13,7 +13,7 @@ from .forms import OrderForm, SearchForm, SearchLog, DisplayDueouts
 ORDER_EDIT = "main.order_edit"
 ORDERS = "main/orders.html"
 SEARCH = "main/search.html"
-DUEOUT_TITLES: list[tuple[str, str] | Any] = [('Log', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
+DUEOUT_TITLES = [('LOG', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
                  ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'),
                  ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
 
@@ -194,7 +194,7 @@ def search_log():
 
 @bp.route('/dueouts', methods=['POST', 'GET'])
 @login_required
-def view_dueouts():
+def view_dueouts():  # sourcery skip: none-compare
     form = DisplayDueouts()
     if form.validate_on_submit():
         duesql = (
@@ -218,7 +218,7 @@ def view_dueouts():
 
 @bp.route('/dueouts_all')
 @login_required
-def all_dueouts():
+def all_dueouts():  # sourcery skip: none-compare
     duesql = (
         db.select(Order)
         .where(
