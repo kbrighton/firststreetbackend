@@ -162,7 +162,7 @@ def update():
     if 'id' not in data:
         abort(400)
     user = Order.query.get(data['id'])
-    for field in ['ARTLO', 'TITLE', 'PRIOR', 'DATIN', 'DUEOUT', 'COLORF', 'PRINT_N', 'RUSHN', 'DATOUT']:
+    for field in ['LOG', 'ARTLO', 'TITLE', 'PRIOR', 'DATIN', 'DUEOUT', 'COLORF', 'PRINT_N', 'RUSHN', 'DATOUT']:
         if field in data:
             setattr(user, field, data[field])
     db.session.commit()
