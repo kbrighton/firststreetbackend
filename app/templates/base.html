@@ -8,6 +8,7 @@
     <title>First Street Graphics Order Intake</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     {{ bootstrap.load_css() }}
+    {% block header %}{% endblock %}
     <style>
         pre {
             background: #ddd;
@@ -36,6 +37,7 @@
                 {% if current_user.is_authenticated %}
                     {{ render_nav_item('main.search_form', 'Search Form') }}
                     {{ render_nav_item('main.search_log', 'Search Log') }}
+                    {{ render_nav_item('main.new_search','NEW SEARCH BETA') }}
                     {{ render_nav_item('main.new_order', 'New Order') }}
                     {{ render_nav_item('main.view_dueouts', 'Due Outs') }}
                     {{ render_nav_item('main.all_dueouts', 'All Due Outs') }}

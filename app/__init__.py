@@ -1,6 +1,6 @@
 from flask import Flask
 
-from app.extensions import db, migrate, bootstrap, login
+from app.extensions import db, migrate, bootstrap, login, marshmallow
 from config import Config
 
 
@@ -12,6 +12,7 @@ def create_app(config_class=Config):
     # Initialize Flask extensions here
     db.init_app(app)
     migrate.init_app(app, db)
+    marshmallow.init_app(app)
 
     bootstrap.init_app(app)
     login.init_app(app)

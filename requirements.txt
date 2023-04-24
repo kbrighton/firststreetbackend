@@ -8,5 +8,6 @@ Flask~=2.2.3
 SQLAlchemy~=2.0.9
 bootstrap-flask
 python-dotenv
-
+Flask-marshmallow
+marshmallow-sqlalchemy
 
