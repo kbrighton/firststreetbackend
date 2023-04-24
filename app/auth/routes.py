@@ -9,6 +9,7 @@ from app.models import User
 
 INDEX = "main.index"
 
+
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:

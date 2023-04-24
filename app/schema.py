@@ -6,6 +6,7 @@ class OrderSchema(marshmallow.SQLAlchemyAutoSchema):
     class Meta:
         model = Order
         fields = ("LOG", "CUST", "TITLE", "DATIN", "ARTOUT", "DUEOUT", "PRINT_N", "ARTLO", "PRIOR", "LOGTYPE", "COLORF", "REF_ARTLO", "HOWSHIP", "DATOUT")
+        dateformat = "%x"
 
 
 order_schema = OrderSchema()
