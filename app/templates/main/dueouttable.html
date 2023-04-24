@@ -3,7 +3,7 @@
 
 {% block content %}
 <h2>Due Outs</h2>
-
-{{ render_table(data, titles, table_classes='table-striped', header_classes='thead-dark', caption='Due Outs') }}
-
+    <div class="w-100">
+{{ render_table(data, titles, table_classes='table-striped', header_classes='thead-dark', caption='Due Outs', responsive=True) }}
+    </div>
 {% endblock %}
