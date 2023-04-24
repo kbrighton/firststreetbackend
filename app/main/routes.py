@@ -14,7 +14,7 @@ ORDER_EDIT = "main.order_edit"
 ORDERS = "main/orders.html"
 SEARCH = "main/search.html"
 DUEOUT_TITLES = [('LOG', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
-                 ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINTN', 'Print Number'),
+                 ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINT_N', 'Print Number'),
                  ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
 
 
@@ -30,6 +30,7 @@ def order_edit(log_id):
     order = db.session.execute(db.select(Order).filter_by(LOG=log_id)).scalar_one()
     form = OrderForm(obj=order)
     if request.method == 'POST' and form.validate_on_submit():
+        order.LOG = form.LOG.data
         order.CUST = form.CUST.data
         order.TITLE = form.TITLE.data
         order.DATIN = form.DATIN.data
@@ -109,6 +110,7 @@ def new_order():
 
     return render_template(ORDERS, form=form)
 
+
 @bp.route('/newsearch')
 @login_required
 def new_search():
@@ -165,8 +167,6 @@ def update():
             setattr(user, field, data[field])
     db.session.commit()
     return '', 204
-
-
 
 
 @bp.route('/search', methods=['POST', 'GET'])
@@ -234,3 +234,4 @@ def all_dueouts():  # sourcery skip: none-compare
     titles = DUEOUT_TITLES
     data = orders_schema.dump(dueouts)
     return render_template('main/dueouttable.html', titles=titles, data=data)
+
