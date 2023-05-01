@@ -20,12 +20,11 @@ class Config(object):
 
     @staticmethod
     def init_app(app):
-        #This is an abstract method
+        # This is an abstract method
         pass
 
 
 class ProductionConfig(Config):
-
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
 
     @classmethod

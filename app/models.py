@@ -8,7 +8,7 @@ from app.extensions import db, login
 class Customer(db.Model):
     __tablename__ = 'Customers'
 
-    CUSTID = db.Column(db.String(255))
+    CUSTID = db.Column(db.String(255), primary_key=True)
     Customer_ID = db.Column('Customer ID', db.String(255))
     Customer = db.Column(db.String(255))
     Address_Line_1 = db.Column('Address Line 1', db.String(255))
@@ -29,7 +29,6 @@ class Customer(db.Model):
     Ship_to_1_State_ = db.Column('Ship to 1 State ', db.String(255))
     Ship_to_1_Zip_ = db.Column('Ship to 1 Zip ', db.String(255))
     Customer_E_mail = db.Column('Customer E-mail', db.String(255))
-    id = db.Column(db.Integer, primary_key=True)
 
     def __repr__(self):
         return f'<Customer "{self.Customer}">'

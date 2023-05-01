@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, SubmitField, DateField, IntegerField,SelectField
+from wtforms import StringField, BooleanField, SubmitField, DateField, IntegerField, SelectField
 from wtforms.validators import Length, Optional
 
 
@@ -14,9 +14,12 @@ class OrderForm(FlaskForm):
     ARTLO = StringField("Art Log", validators=[Optional()])
     RUSH = BooleanField("RUSH?")
     PRIOR = IntegerField("Priority", validators=[Optional()])
-    LOGTYPE = SelectField("Log Type", choices=[("TR","Transfer"),("DP","Direct Print"),("AA","Art Approval"),("VG","Vinyl"),("DG","Digital Graphics"),("GM","General Maintenence"),("PP","Promotional Products")])
+    LOGTYPE = SelectField("Log Type",
+                          choices=[("TR", "Transfer"), ("DP", "Direct Print"), ("AA", "Art Approval"), ("VG", "Vinyl"),
+                                   ("DG", "Digital Graphics"), ("GM", "General Maintenance"),
+                                   ("PP", "Promotional Products")])
     COLORF = IntegerField("# of Colors", validators=[Optional()])
-    REF_ARTLO = StringField("Art Reference", validators=[Optional(),Length(min=5, max=5)])
+    REF_ARTLO = StringField("Art Reference", validators=[Optional(), Length(min=5, max=5)])
     HOWSHIP = IntegerField("How Shipped", validators=[Optional()])
     DATOUT = DateField("DATOUT", validators=[Optional()])
 
