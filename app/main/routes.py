@@ -1,5 +1,3 @@
-from typing import List, Tuple, Any
-
 from flask import render_template, redirect, url_for, request, flash, abort
 from flask_login import login_required
 from sqlalchemy import and_, or_
@@ -7,7 +5,7 @@ from sqlalchemy import and_, or_
 from app.extensions import db
 from app.main import bp
 from app.models import Order
-from app.schema import OrderSchema, order_schema, orders_schema
+from app.schema import orders_schema
 from .forms import OrderForm, SearchForm, SearchLog, DisplayDueouts
 
 ORDER_EDIT = "main.order_edit"
@@ -15,7 +13,7 @@ ORDERS = "main/orders.html"
 SEARCH = "main/search.html"
 DUEOUT_TITLES = [('LOG', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
                  ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINT_N', 'Print Number'),
-                 ('LOGTYPE', 'Logtype'), ('RUSHN', 'Rush'), ('DATOUT', 'Date Out')]
+                 ('LOGTYPE', 'Logtype'), ('RUSH', 'Rush')]
 
 
 @bp.route('/')
@@ -37,9 +35,10 @@ def order_edit(log_id):
         order.ARTOUT = form.ARTOUT.data
         order.DUEOUT = form.DUEOUT.data
         order.PRINT_N = form.PRINT_N.data
-        order.ARTLO = form.ARTLO.data
         order.PRIOR = form.PRIOR.data
+        order.RUSH = form.RUSH.data
         order.LOGTYPE = form.LOGTYPE.data
+        order.ARTLO = form.ARTLO.data
         order.COLORF = form.COLORF.data
         order.REF_ARTLO = form.REF_ARTLO.data
         order.HOWSHIP = form.HOWSHIP.data
@@ -97,6 +96,7 @@ def new_order():
             order.PRIOR = form.PRIOR.data
             order.LOGTYPE = form.LOGTYPE.data.upper()
             order.COLORF = form.COLORF.data
+            order.RUSH = form.RUSH.data
             order.REF_ARTLO = form.REF_ARTLO.data
             order.HOWSHIP = form.HOWSHIP.data
             order.DATOUT = form.DATOUT.data
@@ -150,7 +150,7 @@ def data():
     # response
     return {
         'data': orders_schema.dump(query),
-        'total': total,
+        'total': total / 10,
     }
 
 
@@ -162,7 +162,7 @@ def update():
     if 'id' not in data:
         abort(400)
     user = Order.query.get(data['id'])
-    for field in ['LOG', 'ARTLO', 'TITLE', 'PRIOR', 'DATIN', 'DUEOUT', 'COLORF', 'PRINT_N', 'RUSHN', 'DATOUT']:
+    for field in ['LOG', 'ARTLO', 'TITLE', 'PRIOR', 'DATIN', 'DUEOUT', 'COLORF', 'PRINT_N', 'LOGTYPE', 'RUSH', 'DATOUT']:
         if field in data:
             setattr(user, field, data[field])
     db.session.commit()
@@ -234,4 +234,3 @@ def all_dueouts():  # sourcery skip: none-compare
     titles = DUEOUT_TITLES
     data = orders_schema.dump(dueouts)
     return render_template('main/dueouttable.html', titles=titles, data=data)
-

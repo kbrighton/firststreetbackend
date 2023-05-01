@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
 {% from 'bootstrap5/table.html' import render_table %}
-{% from 'bootstrap5/pagination.html' import render_pager, render_pagination %}
 
 {% block header %}
-    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet"/>
 {% endblock %}
 {% block content %}
     <h2>BETA SEARCH - FIELDS ARE EDITABLE AND WILL DIRECTLY UPDATE THE ORDER</h2>
@@ -23,8 +22,7 @@
         const editableCellAttributes = (data, row, col) => {
             if (row) {
                 return {contentEditable: 'true', 'data-element-id': row.cells[0].data};
-            }
-            else {
+            } else {
                 return {};
             }
         };
@@ -32,18 +30,23 @@
         new gridjs.Grid({
             columns:
                 [
-                    { id:'LOG', name: 'Log#', 'attributes': editableCellAttributes},
-                    { id:'ARTLO', name:'Artlog', 'attributes': editableCellAttributes },
-                    { id:'CUST', name:'Customer', 'attributes': editableCellAttributes},
-                    { id:'TITLE', name:'Title', 'attributes': editableCellAttributes },
-                    { id:'PRIOR', name:'Priority', 'attributes': editableCellAttributes },
-                    { id:'DATIN', name:'Date In', 'attributes': editableCellAttributes },
-                    { id:'DUEOUT', name:'Due Out', 'attributes': editableCellAttributes },
-                    { id:'COLORF', name:'Colors', 'attributes': editableCellAttributes },
-                    { id:'PRINT_N', name:'Print Number', 'attributes': editableCellAttributes },
-                    { id:'LOGTYPE', name:'Logtype', 'attributes': editableCellAttributes },
-                    { id:'RUSHN', name:'Rush', 'attributes': editableCellAttributes },
-                    { id: 'DATOUT', name:'Date Out', 'attributes': editableCellAttributes },
+                    {id: 'LOG', name: 'Log#', 'attributes': editableCellAttributes},
+                    {id: 'ARTLO', name: 'Artlog', 'attributes': editableCellAttributes},
+                    {id: 'CUST', name: 'Customer', 'attributes': editableCellAttributes},
+                    {id: 'TITLE', name: 'Title', 'attributes': editableCellAttributes},
+                    {id: 'PRIOR', name: 'Priority', 'attributes': editableCellAttributes},
+                    {id: 'DATIN', name: 'Date In', 'attributes': editableCellAttributes},
+                    {id: 'DUEOUT', name: 'Due Out', 'attributes': editableCellAttributes},
+                    {id: 'COLORF', name: 'Colors', 'attributes': editableCellAttributes},
+                    {id: 'PRINT_N', name: 'Print Number', 'attributes': editableCellAttributes},
+                    {id: 'LOGTYPE', name: 'Logtype', 'attributes': editableCellAttributes},
+                    {
+                        id: 'RUSH',
+                        name: 'Rush',
+                        formatter: (cell) => `${cell.toString()}`,
+                        'attributes': editableCellAttributes
+                    },
+                    {id: 'DATOUT', name: 'Date Out', 'attributes': editableCellAttributes},
                 ],
             server: {
                 url: '/api/data',
@@ -63,7 +66,7 @@
                 multiColumn: true,
                 server: {
                     url: (prev, columns) => {
-                        const columnIds = ['LOG', 'ARTLO', 'CUST', 'TITLE', 'PRIOR', 'DATIN', 'DUEOUT', 'COLORF', 'PRINT_N', 'RUSHN', 'DATOUT'];
+                        const columnIds = ['LOG', 'ARTLO', 'CUST', 'TITLE', 'PRIOR', 'DATIN', 'DUEOUT', 'COLORF', 'PRINT_N', 'RUSH', 'LOGTYPE', 'DATOUT'];
                         const sort = columns.map(col => (col.direction === 1 ? '+' : '-') + columnIds[col.index]);
                         return updateUrl(prev, {sort});
                     },
@@ -108,8 +111,7 @@
                 if (ev.key === 'Escape') {
                     ev.target.textContent = savedValue;
                     ev.target.blur();
-                }
-                else if (ev.key === 'Enter') {
+                } else if (ev.key === 'Enter') {
                     ev.preventDefault();
                     ev.target.blur();
                 }
