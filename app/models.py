@@ -1,6 +1,7 @@
 # coding: utf-8
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import Identity
 
 from app.extensions import db, login
 
@@ -8,6 +9,7 @@ from app.extensions import db, login
 class Customer(db.Model):
     __tablename__ = 'Customers'
 
+    id = db.Column(db.Integer, Identity(), primary_key=True, nullable=False)
     CUSTID = db.Column(db.String(255), primary_key=True)
     Customer_ID = db.Column('Customer ID', db.String(255))
     Customer = db.Column(db.String(255))
@@ -37,7 +39,8 @@ class Customer(db.Model):
 class Order(db.Model):
     __tablename__ = 'Orders'
 
-    LOG = db.Column(db.String(7), primary_key=True)
+    id = db.Column(db.Integer, Identity(), primary_key=True, nullable=False)
+    LOG = db.Column(db.String(7))
     CUST = db.Column(db.String(5))
     CUST_P_0 = db.Column(db.String(8))
     PRIOR = db.Column(db.String(1))
