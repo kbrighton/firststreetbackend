@@ -40,7 +40,7 @@ class Order(db.Model):
     __tablename__ = 'Orders'
 
     id = db.Column(db.Integer, Identity(), primary_key=True, nullable=False)
-    LOG = db.Column(db.String(7))
+    LOG = db.Column(db.String(7), unique=True)
     CUST = db.Column(db.String(5))
     CUST_P_0 = db.Column(db.String(8))
     PRIOR = db.Column(db.String(1))
