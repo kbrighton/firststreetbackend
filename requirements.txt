@@ -4,7 +4,7 @@ Flask-Migrate
 Flask-WTF
 Flask-Login
 werkzeug
-Flask~=2.3.2
+Flask~=3.0.0
 SQLAlchemy~=2.0.9
 bootstrap-flask
 python-dotenv
