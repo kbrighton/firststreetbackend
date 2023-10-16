@@ -2,7 +2,7 @@ psycopg2-binary~=2.9.6
 Flask-SQLAlchemy
 Flask-Migrate
 Flask-WTF
-Flask-Login
+Flask-Login @ git+https://github.com/maxcountryman/flask-login.git
 werkzeug
 Flask~=3.0.0
 SQLAlchemy~=2.0.9
@@ -10,4 +10,3 @@ bootstrap-flask
 python-dotenv
 Flask-marshmallow
 marshmallow-sqlalchemy
-
