@@ -14,7 +14,7 @@ def login():
         return db.session.execute(db.select(User).filter_by(username=username)).scalar_one_or_none()
 
     if current_user.is_authenticated:
-        return redirect('main.index')
+        return redirect('/')
 
     login_form = LoginForm()
 
@@ -26,12 +26,8 @@ def login():
             return redirect('/')
 
         login_user(user, remember=login_form.remember_me.data)
-        next_page = request.args.get('next')
 
-        if not next_page or urlsplit(next_page).netloc != '':
-            next_page = 'main.index'
-
-        return redirect(next_page)
+        return redirect('/')
 
     return render_template('auth/login.html', title='Sign In', form=login_form)
 
