@@ -16,7 +16,7 @@ class OrderForm(FlaskForm):
     PRIOR = IntegerField("Priority", validators=[Optional()])
     LOGTYPE = SelectField("Log Type",
                           choices=[("TR", "Transfer"), ("DP", "Direct Print"), ("AA", "Art Approval"), ("VG", "Vinyl"),
-                                   ("DG", "Digital Graphics"), ("GM", "General Maintenance"),
+                                   ("DG", "Digital Graphics"), ("GM", "General Maintenance"),("DTF", "Direct to Film"),
                                    ("PP", "Promotional Products")])
     COLORF = IntegerField("# of Colors", validators=[Optional()])
     REF_ARTLO = StringField("Art Reference", validators=[Optional(), Length(min=5, max=5)])
