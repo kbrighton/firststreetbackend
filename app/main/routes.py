@@ -22,59 +22,35 @@ def index():
     return render_template("main/index.html")
 
 
+def set_order_attributes_from_form(order, form):
+    order.LOG = form.LOG.data.upper()
+    order.CUST = form.CUST.data.upper()
+    order.TITLE = form.TITLE.data.upper()
+    order.DATIN = form.DATIN.data
+    order.ARTOUT = form.ARTOUT.data
+    order.DUEOUT = form.DUEOUT.data
+    order.PRINT_N = form.PRINT_N.data
+    order.ARTLO = form.ARTLO.data.upper()
+    order.PRIOR = form.PRIOR.data
+    order.LOGTYPE = form.LOGTYPE.data.upper()
+    order.COLORF = form.COLORF.data
+    order.RUSH = form.RUSH.data
+    order.REF_ARTLO = form.REF_ARTLO.data
+    order.HOWSHIP = form.HOWSHIP.data
+    order.DATOUT = form.DATOUT.data
+    return order
+
+
 @bp.route('/order/<log_id>', methods=['POST', 'GET'])
 @login_required
 def order_edit(log_id):
     order = db.session.execute(db.select(Order).filter_by(LOG=log_id)).scalar_one()
     form = OrderForm(obj=order)
     if request.method == 'POST' and form.validate_on_submit():
-        order.LOG = form.LOG.data
-        order.CUST = form.CUST.data
-        order.TITLE = form.TITLE.data
-        order.DATIN = form.DATIN.data
-        order.ARTOUT = form.ARTOUT.data
-        order.DUEOUT = form.DUEOUT.data
-        order.PRINT_N = form.PRINT_N.data
-        order.PRIOR = form.PRIOR.data
-        order.RUSH = form.RUSH.data
-        order.LOGTYPE = form.LOGTYPE.data
-        order.ARTLO = form.ARTLO.data
-        order.COLORF = form.COLORF.data
-        order.REF_ARTLO = form.REF_ARTLO.data
-        order.HOWSHIP = form.HOWSHIP.data
-        order.DATOUT = form.DATOUT.data
-
+        order = set_order_attributes_from_form(order, form)
         db.session.commit()
         return redirect(url_for(ORDER_EDIT, log_id=order.LOG))
     return render_template(ORDERS, form=form)
-
-
-@bp.route('/order_search/', methods=['POST', 'GET'])
-@login_required
-def search_result():
-    cust = request.args.get('cust')
-    title = request.args.get('title')
-    clauses = []
-    if cust:
-        clauses.append(Order.CUST.ilike(f'%{cust}%'))
-
-    if title:
-        clauses.append(Order.TITLE.ilike(f'%{title}%'))
-
-    orders_list = db.select(Order).where(and_(*clauses)).order_by(Order.DATIN.desc(), Order.CUST.desc())
-
-    page = request.args.get('page', 1, type=int)
-    pagination = db.paginate(orders_list, page=page, per_page=20)
-    orders = pagination.items
-    if not orders:
-        flash("Could not find any orders that match")
-
-        return redirect(url_for("main.search_form"))
-
-    titles = DUEOUT_TITLES
-    data = orders_schema.dump(orders)
-
-    return render_template("main/resultstable.html", pagination=pagination, data=data, titles=titles, Order=Order)
 
 
 @bp.route('/order', methods=['POST', 'GET'])
@@ -85,29 +61,13 @@ def new_order():
         order = db.session.execute(db.select(Order).filter_by(LOG=form.LOG.data)).first()
         if order is None:
             order = Order()
-            order.LOG = form.LOG.data.upper()
-            order.CUST = form.CUST.data.upper()
-            order.TITLE = form.TITLE.data.upper()
-            order.DATIN = form.DATIN.data
-            order.ARTOUT = form.ARTOUT.data
-            order.DUEOUT = form.DUEOUT.data
-            order.PRINT_N = form.PRINT_N.data
-            order.ARTLO = form.ARTLO.data.upper()
-            order.PRIOR = form.PRIOR.data
-            order.LOGTYPE = form.LOGTYPE.data.upper()
-            order.COLORF = form.COLORF.data
-            order.RUSH = form.RUSH.data
-            order.REF_ARTLO = form.REF_ARTLO.data
-            order.HOWSHIP = form.HOWSHIP.data
-            order.DATOUT = form.DATOUT.data
-
+            order = set_order_attributes_from_form(order, form)
             db.session.add(order)
             db.session.commit()
             return redirect(url_for(ORDER_EDIT, log_id=order.LOG))
         else:
             flash("That LOG Number already exists")
             return render_template(ORDERS, form=form)
-
     return render_template(ORDERS, form=form)
 
 
@@ -117,29 +77,38 @@ def new_search():
     return render_template("main/newresults.html")
 
 
-@bp.route('/api/data')
-@login_required
-def data():
-    query = Order.query
+ORDER_FIELDS = ['id', 'LOG', 'ARTLO', 'TITLE', 'PRIOR', 'DATIN', 'DUEOUT',
+                'COLORF', 'PRINT_N', 'LOGTYPE', 'RUSH', 'DATOUT']
 
-    if search := request.args.get('search'):
+
+def filter_query(query):
+    search = request.args.get('search')
+    if search:
         query = query.filter(db.or_(
             Order.CUST.ilike(f'%{search}%'),
             Order.TITLE.ilike(f'%{search}%')
         ))
-    total = query.count()
+    return query
 
-    if sort := request.args.get('sort'):
-        order = []
-        for s in sort.split(','):
-            direction = s[0]
-            name = s[1:]
-            col = getattr(Order, name)
-            if direction == '-':
-                col = col.desc()
-            order.append(col)
-        if order:
-            query = query.order_by(*order)
+
+def order_query(query):
+    sort_argument = request.args.get('sort')
+    if sort_argument:
+        sort_order = [getattr(Order, s[1:]).desc() if s[0] == '-' else getattr(Order, s[1:])
+                      for s in sort_argument.split(',')]
+        query = query.order_by(*sort_order)
+    return query
+
+
+@bp.route('/api/data')
+@login_required
+def fetch_data():
+    query = Order.query
+
+    query = filter_query(query)
+    total_orders = query.count()
+
+    query = order_query(query)
 
     # pagination
     start = request.args.get('start', type=int, default=-1)
@@ -150,21 +119,21 @@ def data():
     # response
     return {
         'data': orders_schema.dump(query),
-        'total': total / 10,
+        'total': total_orders / 10,
     }
 
 
 @bp.route('/api/data', methods=['POST'])
 @login_required
-def update():
+def update_order():
     data = request.get_json()
     print(data)
     if 'id' not in data:
         abort(400)
-    user = Order.query.get(data['id'])
-    for field in ['id', 'LOG', 'ARTLO', 'TITLE', 'PRIOR', 'DATIN', 'DUEOUT', 'COLORF', 'PRINT_N', 'LOGTYPE', 'RUSH', 'DATOUT']:
+    order = Order.query.get(data['id'])
+    for field in ORDER_FIELDS:
         if field in data:
-            setattr(user, field, data[field])
+            setattr(order, field, data[field])
     db.session.commit()
     return '', 204
 
