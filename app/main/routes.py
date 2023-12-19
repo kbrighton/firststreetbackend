@@ -53,6 +53,34 @@ def order_edit(log_id):
     return render_template(ORDERS, form=form)
 
 
+@bp.route('/order_search/', methods=['POST', 'GET'])
+@login_required
+def search_result():
+    cust = request.args.get('cust')
+    title = request.args.get('title')
+    clauses = []
+    if cust:
+        clauses.append(Order.CUST.ilike(f'%{cust}%'))
+
+    if title:
+        clauses.append(Order.TITLE.ilike(f'%{title}%'))
+
+    orders_list = db.select(Order).where(and_(*clauses)).order_by(Order.DATIN.desc(), Order.CUST.desc())
+
+    page = request.args.get('page', 1, type=int)
+    pagination = db.paginate(orders_list, page=page, per_page=20)
+    orders = pagination.items
+    if not orders:
+        flash("Could not find any orders that match")
+
+        return redirect(url_for("main.search_form"))
+
+    titles = DUEOUT_TITLES
+    data = orders_schema.dump(orders)
+
+    return render_template("main/resultstable.html", pagination=pagination, data=data, titles=titles, Order=Order)
+
+
 @bp.route('/order', methods=['POST', 'GET'])
 @login_required
 def new_order():
