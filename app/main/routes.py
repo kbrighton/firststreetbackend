@@ -200,7 +200,7 @@ def view_dueouts():  # sourcery skip: none-compare
                 and_(
                     or_(Order.LOGTYPE == "TR", Order.LOGTYPE == "DP"),
                     Order.DATOUT == None,
-                    Order.DUEOUT == form.Date.data,
+                    Order.DUEOUT <= form.Date.data,
                 )
             )
             .order_by(Order.DUEOUT.desc())
