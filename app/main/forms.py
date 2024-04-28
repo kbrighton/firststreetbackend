@@ -38,5 +38,6 @@ class SearchLog(FlaskForm):
 
 
 class DisplayDueouts(FlaskForm):
-    Date = DateField("Due Outs Date")
+    StartDate = DateField("Start Due Outs Date")
+    EndDate = DateField("End Due Outs Date")
     Submit = SubmitField("Submit")
