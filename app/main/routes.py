@@ -1,6 +1,10 @@
 from flask import render_template, redirect, url_for, request, flash, abort
 from flask_login import login_required
 from sqlalchemy import and_, or_
+import logging
+
+logging.basicConfig()
+logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
 from app.extensions import db
 from app.main import bp
@@ -189,45 +193,36 @@ def search_log():
     return render_template(SEARCH, form=form)
 
 
+def process_dueouts_form(start=None, end=None):
+    duesql = db.select(Order)
+    duesql = duesql.where((Order.LOGTYPE == "TR") | (Order.LOGTYPE == "DP"))
+    duesql = duesql.where(Order.DATOUT == None)
+    duesql = duesql.where(Order.DUEOUT != None)
+
+    if start is not None:
+        duesql = duesql.where(Order.DUEOUT >= start)
+
+    if end is not None:
+        duesql = duesql.where(Order.DUEOUT <= end)
+
+    duesql = duesql.order_by(Order.DUEOUT.asc())
+
+    dueouts = db.session.execute(duesql).scalars()
+    titles = DUEOUT_TITLES
+    data = orders_schema.dump(dueouts)
+    return render_template('main/dueouttable.html', titles=titles, data=data)
+
+
 @bp.route('/dueouts', methods=['POST', 'GET'])
 @login_required
 def view_dueouts():  # sourcery skip: none-compare
     form = DisplayDueouts()
     if form.validate_on_submit():
-        duesql = (
-            db.select(Order)
-            .where(
-                and_(
-                    or_(Order.LOGTYPE == "TR", Order.LOGTYPE == "DP"),
-                    Order.DATOUT == None,
-                    Order.DUEOUT <= form.Date.data,
-                )
-            )
-            .order_by(Order.DUEOUT.desc())
-        )
-        dueouts = db.session.execute(duesql).scalars()
-        titles = DUEOUT_TITLES
-        data = orders_schema.dump(dueouts)
-
-        return render_template('main/dueouttable.html', titles=titles, data=data)
+        return process_dueouts_form(start=form.StartDate.data, end=form.EndDate.data)
     return render_template("main/dueoutform.html", form=form)
 
 
 @bp.route('/dueouts_all')
 @login_required
 def all_dueouts():  # sourcery skip: none-compare
-    duesql = (
-        db.select(Order)
-        .where(
-            and_(
-                or_(Order.LOGTYPE == "TR", Order.LOGTYPE == "DP"),
-                Order.DATOUT == None,
-            ),
-            Order.DUEOUT != None,
-        )
-        .order_by(Order.DUEOUT.desc())
-    )
-    dueouts = db.session.execute(duesql).scalars()
-    titles = DUEOUT_TITLES
-    data = orders_schema.dump(dueouts)
-    return render_template('main/dueouttable.html', titles=titles, data=data)
+    return process_dueouts_form()
