@@ -195,7 +195,7 @@ def search_log():
 
 def process_dueouts_form(start=None, end=None):
     duesql = db.select(Order)
-    duesql = duesql.where((Order.LOGTYPE == "TR") | (Order.LOGTYPE == "DP"))
+    duesql = duesql.where((Order.LOGTYPE == "TR") | (Order.LOGTYPE == "DP") | (Order.LOGTYPE == "AA"))
     duesql = duesql.where(Order.DATOUT == None)
     duesql = duesql.where(Order.DUEOUT != None)
 
