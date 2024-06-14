@@ -21,6 +21,7 @@ class OrderForm(FlaskForm):
     COLORF = IntegerField("# of Colors", validators=[Optional()])
     REF_ARTLO = StringField("Art Reference", validators=[Optional(), Length(min=5, max=5)])
     HOWSHIP = IntegerField("How Shipped", validators=[Optional()])
+    ARTNO = StringField("Artist ID", validators=[Optional(), Length(min=4, max=5)])
     DATOUT = DateField("DATOUT", validators=[Optional()])
 
     Submit = SubmitField("Submit")

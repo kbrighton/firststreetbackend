@@ -17,7 +17,7 @@ ORDERS = "main/orders.html"
 SEARCH = "main/search.html"
 DUEOUT_TITLES = [('LOG', 'Log#'), ('ARTLO', 'Artlog'), ('CUST', 'Customer'), ('TITLE', 'Title'), ('PRIOR', 'Priority'),
                  ('DATIN', 'Date In'), ('DUEOUT', 'Due Out'), ('COLORF', 'Colors'), ('PRINT_N', 'Print Number'),
-                 ('LOGTYPE', 'Logtype'), ('RUSH', 'Rush')]
+                 ('LOGTYPE', 'Logtype'), ('RUSH', 'Rush'), ('ARTNO','Artist ID')]
 
 
 @bp.route('/')
@@ -42,6 +42,7 @@ def set_order_attributes_from_form(order, form):
     order.REF_ARTLO = form.REF_ARTLO.data
     order.HOWSHIP = form.HOWSHIP.data
     order.DATOUT = form.DATOUT.data
+    order.ARTNO = form.ARTNO.data
     return order
 
 
@@ -110,7 +111,7 @@ def new_search():
 
 
 ORDER_FIELDS = ['id', 'LOG', 'ARTLO', 'TITLE', 'PRIOR', 'DATIN', 'DUEOUT',
-                'COLORF', 'PRINT_N', 'LOGTYPE', 'RUSH', 'DATOUT']
+                'COLORF', 'PRINT_N', 'LOGTYPE', 'RUSH', 'DATOUT', 'ARTNO']
 
 
 def filter_query(query):
@@ -205,7 +206,7 @@ def process_dueouts_form(start=None, end=None):
     if end is not None:
         duesql = duesql.where(Order.DUEOUT <= end)
 
-    duesql = duesql.order_by(Order.DUEOUT.asc())
+    duesql = duesql.order_by(Order.DUEOUT.desc())
 
     dueouts = db.session.execute(duesql).scalars()
     titles = DUEOUT_TITLES
