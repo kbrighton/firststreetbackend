@@ -8,7 +8,7 @@ filtering, sorting, and pagination capabilities.
 
 from datetime import date
 from typing import Optional, Type, List, Any, Union
-from sqlalchemy.orm import Query, joinedload
+from sqlalchemy.orm import Query
 from flask_sqlalchemy.pagination import Pagination
 
 from sqlalchemy import and_, or_
@@ -41,8 +41,8 @@ class OrderRepository(BaseRepository[Order]):
         Returns:
             The order object or None if not found
         """
-        # Use a query with joinedload to eager load the customer relationship
-        query = db.select(self.model).options(joinedload(self.model.customer)).filter(
+        # Query for the order by log ID
+        query = db.select(self.model).filter(
             self.model.log == log_id,
             self.model.deleted_at.is_(None)
         )
@@ -67,8 +67,8 @@ class OrderRepository(BaseRepository[Order]):
         if title:
             clauses.append(self.model.title.ilike(f'%{title}%'))
 
-        # Use joinedload to eager load the customer relationship
-        orders_query = db.select(self.model).options(joinedload(self.model.customer)).where(and_(*clauses)).order_by(self.model.datin.desc(), self.model.cust.desc())
+        # Query for orders matching the search criteria
+        orders_query = db.select(self.model).where(and_(*clauses)).order_by(self.model.datin.desc(), self.model.cust.desc())
         return db.session.execute(orders_query).scalars().all()
 
     def filter(self, search: Optional[str] = None) -> Query:
@@ -81,8 +81,8 @@ class OrderRepository(BaseRepository[Order]):
         Returns:
             Filtered query object with only non-deleted orders
         """
-        # Start with a query that filters out deleted records and eager loads the customer relationship
-        query = self.model.query.options(joinedload(self.model.customer)).filter(self.model.deleted_at.is_(None))
+        # Start with a query that filters out deleted records
+        query = self.model.query.filter(self.model.deleted_at.is_(None))
 
         if search:
             query = query.filter(or_(
@@ -133,8 +133,29 @@ class OrderRepository(BaseRepository[Order]):
         Returns:
             List of non-deleted orders due out in the date range
         """
-        # Use joinedload to eager load the customer relationship
-        duesql = db.select(self.model).options(joinedload(self.model.customer))
+        # Ensure start and end are date objects if provided
+        if start is not None and not isinstance(start, date):
+            if isinstance(start, str):
+                try:
+                    from datetime import datetime
+                    start = datetime.strptime(start, '%Y-%m-%d').date()
+                except ValueError:
+                    raise ValueError(f"Invalid start date format: {start}. Expected format: YYYY-MM-DD")
+            else:
+                raise TypeError(f"start must be a date object or a string in YYYY-MM-DD format, got {type(start)}")
+
+        if end is not None and not isinstance(end, date):
+            if isinstance(end, str):
+                try:
+                    from datetime import datetime
+                    end = datetime.strptime(end, '%Y-%m-%d').date()
+                except ValueError:
+                    raise ValueError(f"Invalid end date format: {end}. Expected format: YYYY-MM-DD")
+            else:
+                raise TypeError(f"end must be a date object or a string in YYYY-MM-DD format, got {type(end)}")
+
+        # Query for orders due out within the date range
+        duesql = db.select(self.model)
         # Filter out deleted records
         duesql = duesql.where(self.model.deleted_at.is_(None))
         duesql = duesql.where((self.model.logtype == "TR") | (self.model.logtype == "DP") | (self.model.logtype == "AA"))

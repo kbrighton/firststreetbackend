@@ -7,7 +7,7 @@ class UserSchema(marshmallow.SQLAlchemyAutoSchema):
         model = User
         fields = ("id", "username", "email", "created_at", "updated_at")
         # Exclude password_hash for security reasons
-        dateformat = "%x"
+        dateformat = "%Y-%m-%d"
 
 
 user_schema = UserSchema()

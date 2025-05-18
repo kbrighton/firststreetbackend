@@ -21,17 +21,17 @@ def test_user_factory(user_factory, db_session):
     assert user1.email.endswith('@example.com')
     assert user1.role == 'user'
     assert user1.check_password('password123')
-    
+
     # Create a user with custom values
     user2 = user_factory(username='custom_user', email='custom@example.com', role='admin')
     assert user2.username == 'custom_user'
     assert user2.email == 'custom@example.com'
     assert user2.role == 'admin'
-    
+
     # Create a user with a custom password
     user3 = user_factory(set_password='custom_password')
     assert user3.check_password('custom_password')
-    
+
     # Verify users are in the database
     users = db_session.query(User).all()
     assert len(users) >= 3
@@ -46,7 +46,7 @@ def test_customer_factory(customer_factory, db_session):
     assert len(customer1.cust_id) == 5
     assert customer1.customer is not None
     assert '@' in customer1.customer_email
-    
+
     # Create a customer with custom values
     customer2 = customer_factory(
         cust_id='54321',
@@ -58,7 +58,7 @@ def test_customer_factory(customer_factory, db_session):
     assert customer2.customer == 'Custom Company'
     assert customer2.customer_email == 'custom@example.com'
     assert customer2.zip == '90210'
-    
+
     # Verify customers are in the database
     customers = db_session.query(Customer).all()
     assert len(customers) >= 2
@@ -76,14 +76,14 @@ def test_order_factory(order_factory, customer_factory, db_session):
     assert order1.datin is not None
     assert order1.dueout is not None
     assert order1.logtype in ['TR', 'DP', 'AA', 'VG', 'DG', 'GM', 'DTF', 'PP']
-    
+
     # Create an order with a specific customer
     customer = customer_factory(cust_id='98765')
     order2 = order_factory(customer=customer, title='Custom Order', logtype='TR')
     assert order2.cust == '98765'
     assert order2.title == 'Custom Order'
     assert order2.logtype == 'TR'
-    
+
     # Create an order with custom values
     order3 = order_factory(
         log='ABCDE',
@@ -99,7 +99,7 @@ def test_order_factory(order_factory, customer_factory, db_session):
     assert order3.colorf == 3
     assert order3.subtotal == 1000.0
     assert order3.total == 1080.0
-    
+
     # Verify orders are in the database
     orders = db_session.query(Order).all()
     assert len(orders) >= 3
@@ -109,14 +109,10 @@ def test_factory_relationships(order_factory, db_session):
     """Test that the factories maintain proper relationships between models."""
     # Create an order, which should create a customer
     order = order_factory(title='Relationship Test')
-    
+
     # Verify the order has a valid customer reference
     assert order.cust is not None
-    
+
     # Retrieve the customer from the database
     customer = db_session.query(Customer).filter_by(cust_id=order.cust).first()
     assert customer is not None
-    
-    # Verify the relationship works through the ORM
-    assert order.customer is not None
-    assert order.customer.cust_id == customer.cust_id

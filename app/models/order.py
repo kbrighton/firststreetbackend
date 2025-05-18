@@ -52,11 +52,8 @@ class Order(db.Model):
 
     id = db.Column(db.Integer, db.Identity(), primary_key=True, nullable=False)
     log = db.Column('LOG', db.String(7), unique=True, index=True)
-    cust = db.Column('CUST', db.String(5), ForeignKey('Customers.cust_id'), index=True)
+    cust = db.Column('CUST', db.String(5), index=True)
     cust_p_0 = db.Column('CUST_P_0', db.String(8))
-
-    # Define relationship to Customer
-    customer = relationship("Customer", foreign_keys=[cust], primaryjoin="Order.cust == Customer.cust_id", lazy="joined")
     prior = db.Column('PRIOR', db.String(1))
     shipout = db.Column('SHIPOUT', db.String(5))
     howship = db.Column('HOWSHIP', db.String(5))

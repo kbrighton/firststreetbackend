@@ -43,7 +43,7 @@ class TestOrderModel:
         """Test validate_data with an invalid order."""
         order = Order(**invalid_order_data)
         errors = order.validate_data()
-        
+
         assert 'log' in errors
         assert 'cust' in errors
         assert 'title' in errors
@@ -58,10 +58,10 @@ class TestOrderModel:
         """Test that the validate_order event listener prevents invalid orders from being saved."""
         order = Order(**invalid_order_data)
         db_session.add(order)
-        
+
         with pytest.raises(ValueError) as excinfo:
             db_session.commit()
-        
+
         assert "Order validation failed" in str(excinfo.value)
         db_session.rollback()
 
@@ -71,14 +71,14 @@ class TestOrderModel:
         order1 = Order(**valid_order_data)
         db_session.add(order1)
         db_session.commit()
-        
+
         # Try to create second order with same log
         order2 = Order(**valid_order_data)
         db_session.add(order2)
-        
+
         with pytest.raises(IntegrityError):
             db_session.commit()
-        
+
         db_session.rollback()
 
     def test_validate_alphanumeric(self):
@@ -116,7 +116,7 @@ class TestOrderModel:
         today = date.today()
         tomorrow = today + timedelta(days=1)
         yesterday = today - timedelta(days=1)
-        
+
         assert Order._validate_date_not_in_past(today) is True
         assert Order._validate_date_not_in_past(tomorrow) is True
         assert Order._validate_date_not_in_past(yesterday) is False
@@ -127,7 +127,7 @@ class TestOrderModel:
         today = date.today()
         tomorrow = today + timedelta(days=1)
         yesterday = today - timedelta(days=1)
-        
+
         assert Order._validate_date_range(today, today) is True
         assert Order._validate_date_range(today, tomorrow) is True
         assert Order._validate_date_range(tomorrow, today) is False
@@ -135,10 +135,8 @@ class TestOrderModel:
         assert Order._validate_date_range(today, None) is True
         assert Order._validate_date_range(None, None) is True
 
-    def test_customer_relationship(self, sample_order, sample_customer):
-        """Test the relationship between Order and Customer."""
-        assert sample_order.customer is not None
-        assert sample_order.customer.cust_id == sample_customer.cust_id
+    def test_cust_field(self, sample_order, sample_customer):
+        """Test the cust field in Order."""
         assert sample_order.cust == sample_customer.cust_id
 
     def test_soft_delete(self, db_session, sample_order):
@@ -146,16 +144,16 @@ class TestOrderModel:
         # Set deleted_at timestamp
         sample_order.deleted_at = db.func.current_timestamp()
         db_session.commit()
-        
+
         # Verify order is soft deleted
         assert sample_order.deleted_at is not None
-        
+
         # Verify order is not returned in normal queries
         from app.repositories.order_repository import OrderRepository
         repo = OrderRepository()
         orders = repo.get_all()
         assert sample_order not in orders
-        
+
         # Verify order is returned in queries that include deleted
         deleted_orders = repo.get_deleted()
         assert sample_order in deleted_orders
