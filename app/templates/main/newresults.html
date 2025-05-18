@@ -31,23 +31,23 @@
             columns:
                 [
                     {id: 'id', name: 'id', 'hidden': true},
-                    {id: 'LOG', name: 'Log#', 'attributes': editableCellAttributes},
-                    {id: 'ARTLO', name: 'Artlog', 'attributes': editableCellAttributes},
-                    {id: 'CUST', name: 'Customer', 'attributes': editableCellAttributes},
-                    {id: 'TITLE', name: 'Title', 'attributes': editableCellAttributes},
-                    {id: 'PRIOR', name: 'Priority', 'attributes': editableCellAttributes},
-                    {id: 'DATIN', name: 'Date In', 'attributes': editableCellAttributes},
-                    {id: 'DUEOUT', name: 'Due Out', 'attributes': editableCellAttributes},
-                    {id: 'COLORF', name: 'Colors', 'attributes': editableCellAttributes},
-                    {id: 'PRINT_N', name: 'Print Number', 'attributes': editableCellAttributes},
-                    {id: 'LOGTYPE', name: 'Logtype', 'attributes': editableCellAttributes},
+                    {id: 'log', name: 'Log#', 'attributes': editableCellAttributes},
+                    {id: 'artlo', name: 'Artlog', 'attributes': editableCellAttributes},
+                    {id: 'cust', name: 'Customer', 'attributes': editableCellAttributes},
+                    {id: 'title', name: 'Title', 'attributes': editableCellAttributes},
+                    {id: 'prior', name: 'Priority', 'attributes': editableCellAttributes},
+                    {id: 'datin', name: 'Date In', 'attributes': editableCellAttributes},
+                    {id: 'dueout', name: 'Due Out', 'attributes': editableCellAttributes},
+                    {id: 'colorf', name: 'Colors', 'attributes': editableCellAttributes},
+                    {id: 'print_n', name: 'Print Number', 'attributes': editableCellAttributes},
+                    {id: 'logtype', name: 'Logtype', 'attributes': editableCellAttributes},
                     {
-                        id: 'RUSH',
+                        id: 'rush',
                         name: 'Rush',
                         formatter: (cell) => `${cell.toString()}`,
                         'attributes': editableCellAttributes
                     },
-                    {id: 'DATOUT', name: 'Date Out', 'attributes': editableCellAttributes},
+                    {id: 'datout', name: 'Date Out', 'attributes': editableCellAttributes},
                 ],
             server: {
                 url: '/api/data',
@@ -67,7 +67,7 @@
                 multiColumn: true,
                 server: {
                     url: (prev, columns) => {
-                        const columnIds = ['id', 'LOG', 'ARTLO', 'CUST', 'TITLE', 'PRIOR', 'DATIN', 'DUEOUT', 'COLORF', 'PRINT_N', 'RUSH', 'LOGTYPE', 'DATOUT'];
+                        const columnIds = ['id', 'log', 'artlo', 'cust', 'title', 'prior', 'datin', 'dueout', 'colorf', 'print_n', 'rush', 'logtype', 'datout'];
                         const sort = columns.map(col => (col.direction === 1 ? '+' : '-') + columnIds[col.index]);
                         return updateUrl(prev, {sort});
                     },

@@ -1,6 +1,7 @@
 FROM python:3.13
 
 ENV PYTHONUNBUFFERED=1
+ENV FLASK_ENV=production
 
 WORKDIR /
 
