@@ -158,7 +158,7 @@ class OrderRepository(BaseRepository[Order]):
         duesql = db.select(self.model)
         # Filter out deleted records
         duesql = duesql.where(self.model.deleted_at.is_(None))
-        duesql = duesql.where((self.model.logtype == "TR") | (self.model.logtype == "DP") | (self.model.logtype == "AA"))
+        duesql = duesql.where((self.model.logtype == "TR") | (self.model.logtype == "DP") | (self.model.logtype == "AA") | (self.model.logtype == "DTF"))
         duesql = duesql.where(self.model.datout.is_(None))
         duesql = duesql.where(self.model.dueout.isnot(None))
 
