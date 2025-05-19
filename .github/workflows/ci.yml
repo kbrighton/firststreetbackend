@@ -55,7 +55,7 @@ jobs:
         SECRET_KEY: test_secret_key
 
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-reports
         path: coverage_reports/
