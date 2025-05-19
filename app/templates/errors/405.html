@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container text-center">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="error-template">
+                <h1>Method Not Allowed</h1>
+                <h2>405 Method Not Allowed</h2>
+                <div class="error-details mb-4">
+                    Sorry, the method used is not allowed for this resource.
+                </div>
+                <div class="error-actions">
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                        <span class="glyphicon glyphicon-home"></span>
+                        Take Me Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
