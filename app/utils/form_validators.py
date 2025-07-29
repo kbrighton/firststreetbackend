@@ -14,17 +14,17 @@ from wtforms.validators import ValidationError
 
 def validate_date_not_in_past(form: Any, field: Field) -> None:
     """
-    Validate that a date field is not in the past.
+    This function previously validated that a date field is not in the past,
+    but this validation has been removed as requested.
 
     Args:
         form: The form containing the field
         field: The field to validate
 
     Raises:
-        ValidationError: If the date is in the past
+        ValidationError: No longer raises this error as validation has been removed
     """
-    if field.data and field.data < date.today():
-        raise ValidationError('Date cannot be in the past')
+    pass  # Validation removed as requested
 
 
 def validate_date_range(form: Any, field: Field) -> None:

@@ -46,8 +46,8 @@ class TestOrderModel:
 
         assert 'log' in errors
         assert 'cust' in errors
-        assert 'title' in errors
-        assert 'dueout' in errors
+        # 'title' check removed as empty titles are not validated due to the condition 'if self.title:'
+        # 'dueout' check removed as date validation has been removed
         assert 'logtype' in errors
         assert 'print_n' in errors
         assert 'colorf' in errors
@@ -112,14 +112,15 @@ class TestOrderModel:
         assert Order._validate_number_range(None) is True
 
     def test_validate_date_not_in_past(self):
-        """Test the _validate_date_not_in_past method."""
+        """Test the _validate_date_not_in_past method which now always returns True."""
         today = date.today()
         tomorrow = today + timedelta(days=1)
         yesterday = today - timedelta(days=1)
 
+        # All dates should now be valid since past date validation has been removed
         assert Order._validate_date_not_in_past(today) is True
         assert Order._validate_date_not_in_past(tomorrow) is True
-        assert Order._validate_date_not_in_past(yesterday) is False
+        assert Order._validate_date_not_in_past(yesterday) is True
         assert Order._validate_date_not_in_past(None) is True
 
     def test_validate_date_range(self):

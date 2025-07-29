@@ -270,19 +270,6 @@ class Order(db.Model):
             if self.logtype not in valid_logtypes:
                 errors['logtype'] = f"Log Type must be one of: {', '.join(valid_logtypes)}"
 
-        # Validate dates
-        date_fields = [
-            ('datin', "Date In"),
-            ('artout', "Art Out"),
-            ('dueout', "Due Out"),
-            ('datout', "Date Out")
-        ]
-
-        for field_name, display_name in date_fields:
-            value = getattr(self, field_name, None)
-            if field_name in ['artout', 'dueout'] and value and not self._validate_date_not_in_past(value):
-                errors[field_name] = f"{display_name} cannot be in the past"
-
         # Validate date ranges
         if self.datin and self.dueout and not self._validate_date_range(self.datin, self.dueout):
             errors['dueout'] = "Due Out date must be after Date In"
@@ -359,18 +346,16 @@ class Order(db.Model):
     @staticmethod
     def _validate_date_not_in_past(value: date) -> bool:
         """
-        Validate that a date is not in the past.
+        This method previously validated that a date is not in the past,
+        but this validation has been removed as requested.
 
         Args:
             value (date): The date to validate.
 
         Returns:
-            bool: True if the date is today or in the future, False otherwise.
+            bool: Always returns True.
         """
-        if value is None:
-            return True
-
-        return value >= date.today()
+        return True
 
     @staticmethod
     def _validate_date_range(start_date: date, end_date: date) -> bool:
