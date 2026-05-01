@@ -69,18 +69,16 @@ def validate_length(value: str, min_length: int = 0, max_length: Optional[int] =
 
 def validate_date_not_in_past(value: date) -> bool:
     """
-    Validate that a date is not in the past.
+    This function previously validated that a date is not in the past,
+    but this validation has been removed as requested.
 
     Args:
         value: The date to validate
 
     Returns:
-        True if valid, False otherwise
+        True always
     """
-    if value is None:
-        return True
-
-    return value >= date.today()
+    return True
 
 
 def validate_date_range(start_date: date, end_date: date) -> bool:
@@ -242,10 +240,12 @@ def validate_and_sanitize_order_data(data: Dict[str, Any]) -> Dict[str, Any]:
                     errors.append(f"Invalid {date_field} format. Expected format: YYYY-MM-DD")
                     continue
 
-            if date_field in ['artout', 'dueout'] and date_value and not validate_date_not_in_past(date_value):
-                errors.append(f"{date_field.capitalize()} cannot be in the past")
-            else:
-                sanitized_data[date_field] = date_value
+            # Validate date ranges if this is dueout and datin is also present
+            if date_field == 'dueout' and 'datin' in sanitized_data and sanitized_data['datin'] and date_value:
+                if not validate_date_range(sanitized_data['datin'], date_value):
+                    errors.append("Due Out date must be after Date In")
+            
+            sanitized_data[date_field] = date_value
 
     # Validate and sanitize rush
     if 'rush' in data:

@@ -66,18 +66,16 @@ class TestValidationUtils:
         assert validate_length(None, 1) is False
 
     def test_validate_date_not_in_past(self):
-        """Test validating that a date is not in the past."""
+        """Test validating that a date is not in the past (validation now removed)."""
         today = date.today()
         tomorrow = today + timedelta(days=1)
         yesterday = today - timedelta(days=1)
         
-        # Valid dates
+        # All dates should now be valid since past date validation has been removed
         assert validate_date_not_in_past(today) is True
         assert validate_date_not_in_past(tomorrow) is True
         assert validate_date_not_in_past(None) is True
-        
-        # Invalid dates
-        assert validate_date_not_in_past(yesterday) is False
+        assert validate_date_not_in_past(yesterday) is True  # Now returns True for past dates
 
     def test_validate_date_range(self):
         """Test validating date ranges."""
@@ -149,7 +147,7 @@ class TestValidationUtils:
             "cust": "123",  # Too short
             "title": "",    # Empty title
             "datin": today,
-            "dueout": yesterday,  # Due date in past
+            "dueout": yesterday,  # Due date in past (no longer validated as date validation has been removed)
             "logtype": "INVALID",  # Invalid log type
             "print_n": -1,  # Negative quantity
             "colorf": -2,   # Negative colors
