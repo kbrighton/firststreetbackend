@@ -1,5 +1,6 @@
 from typing import Dict, List, Any, Optional, Union, Tuple
 from flask import request, abort, jsonify, make_response, Response
+from werkzeug.exceptions import HTTPException
 from flask_login import login_required, current_user, login_user, logout_user
 import logging
 from datetime import datetime, date
@@ -44,7 +45,7 @@ def fetch_data() -> Dict[str, Any]:
 
     # Use service to filter orders
     query = order_service.filter_orders(search=search)
-    total_orders = query.count()
+    total_orders = db.session.scalar(db.select(db.func.count()).select_from(query.subquery()))
 
     # Apply sorting
     sort_argument = request.args.get('sort')
@@ -56,10 +57,13 @@ def fetch_data() -> Dict[str, Any]:
     if start != -1 and length != -1:
         query = query.offset(start).limit(length)
 
+    # Execute the query
+    orders = db.session.scalars(query).all()
+
     # response
     return {
-        'data': orders_schema.dump(query),
-        'total': total_orders / 10,
+        'data': orders_schema.dump(orders),
+        'total': total_orders,
     }
 
 
@@ -421,6 +425,7 @@ def create_customer() -> Tuple[Response, int]:
 
     try:
         customer = customer_service.create_customer(data)
+        db.session.flush()
         return jsonify(customer_schema.dump(customer)), 201
     except ValueError as e:
         logger.warning(f"Validation error creating customer: {str(e)}")
@@ -459,6 +464,7 @@ def update_customer(id: int) -> Response:
 
     try:
         updated_customer = customer_service.update_customer(customer, data)
+        db.session.flush()
         return jsonify(customer_schema.dump(updated_customer))
     except ValueError as e:
         logger.warning(f"Validation error updating customer: {str(e)}")
@@ -564,6 +570,9 @@ def api_login() -> Response:
     except ValueError as e:
         logger.warning(f"Validation error during login: {str(e)}")
         abort(400, description=str(e))
+    except HTTPException as e:
+        # Re-raise HTTP exceptions so Flask-RESTful/Flask handle them correctly
+        raise e
     except Exception as e:
         logger.error(f"Error during login: {str(e)}")
         abort(500, description="Error during login")

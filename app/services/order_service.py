@@ -10,6 +10,7 @@ from typing import List, Optional, Dict, Any, Union
 from datetime import date
 from sqlalchemy.orm import Query
 from flask_sqlalchemy.pagination import Pagination
+from flask_login import current_user
 
 from app.models import Order
 from app.repositories.order_repository import OrderRepository
@@ -72,6 +73,9 @@ class OrderService(BaseService[Order]):
             ValueError: If the order data is invalid
             Exception: If there's an error creating the order
         """
+        if current_user and current_user.is_authenticated:
+            order_data['created_by_id'] = current_user.id
+            order_data['updated_by_id'] = current_user.id
         return super().create(order_data)
 
     def update_order(self, order: Order, order_data: Dict[str, Any]) -> Order:
@@ -89,6 +93,8 @@ class OrderService(BaseService[Order]):
             ValueError: If the order data is invalid
             Exception: If there's an error updating the order
         """
+        if current_user and current_user.is_authenticated:
+            order_data['updated_by_id'] = current_user.id
         return super().update(order, order_data)
 
     def delete_order(self, order: Order) -> None:
@@ -166,7 +172,7 @@ class OrderService(BaseService[Order]):
 
         return self.repository.search(sanitized_cust, sanitized_title)
 
-    def filter_orders(self, search: Optional[str] = None) -> Query:
+    def filter_orders(self, search: Optional[str] = None) -> Any:
         """
         Filter orders by search term (customer or title).
 
@@ -181,7 +187,7 @@ class OrderService(BaseService[Order]):
 
         return self.repository.filter(sanitized_search)
 
-    def order_query(self, query: Query, sort_argument: Optional[str] = None) -> Query:
+    def order_query(self, query: Any, sort_argument: Optional[str] = None) -> Any:
         """
         Apply sorting to a query.
 
@@ -194,7 +200,7 @@ class OrderService(BaseService[Order]):
         """
         return self.repository.apply_sort(query, sort_argument)
 
-    def paginate_query(self, query: Query, page: int, per_page: int) -> Pagination:
+    def paginate_query(self, query: Any, page: int, per_page: int) -> Pagination:
         """
         Paginate a query.
 
