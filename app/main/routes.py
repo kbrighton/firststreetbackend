@@ -9,18 +9,19 @@ layer to interact with the database and implements proper error handling and log
 from typing import List, Dict, Any, Tuple, Optional, Union
 from datetime import date
 from flask import render_template, redirect, url_for, request, flash, abort, Response
-from flask_login import login_required
+from flask_login import login_required, current_user
 from sqlalchemy import and_, or_
 
 from app.extensions import db
 from app.logging import get_logger
 from app.main import bp
-from app.models import Order
+from app.models import Order, User
 from app.schemas import orders_schema
 from app.services.order_service import OrderService
+from app.services.user_service import UserService
 from app.utils.pagination import SimplePagination
 from app.utils.form_utils import extract_form_data
-from .forms import OrderForm, SearchForm, SearchLog, DisplayDueouts
+from .forms import OrderForm, SearchForm, SearchLog, DisplayDueouts, UserForm
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -93,8 +94,8 @@ def order_edit(log_id: str) -> Union[str, Response]:
             except Exception as e:
                 logger.error(f"Error updating order: {str(e)}")
                 flash("An error occurred while updating the order")
-                return render_template(ORDERS, form=form)
-        return render_template(ORDERS, form=form)
+                return render_template(ORDERS, form=form, order=order)
+        return render_template(ORDERS, form=form, order=order)
     except Exception as e:
         logger.error(f"Error in order_edit: {str(e)}")
         flash("An error occurred while accessing the order")
@@ -280,3 +281,118 @@ def all_dueouts() -> str:  # sourcery skip: none-compare
         Rendered HTML template with the due-outs table containing all due-out orders.
     """
     return process_dueouts_form()
+
+
+@bp.route('/users')
+@login_required
+def user_list() -> str:
+    """
+    Display a list of all users.
+    Only accessible by administrators.
+    """
+    if current_user.role != 'admin':
+        abort(403)
+    
+    user_service = UserService()
+    users = user_service.get_all_users()
+    return render_template('main/user_list.html', users=users)
+
+
+@bp.route('/user/new', methods=['GET', 'POST'])
+@login_required
+def user_new() -> Union[str, Response]:
+    """
+    Create a new user.
+    Only accessible by administrators.
+    """
+    if current_user.role != 'admin':
+        abort(403)
+    
+    form = UserForm()
+    if form.validate_on_submit():
+        user_service = UserService()
+        try:
+            user_service.create_user(
+                username=form.username.data,
+                email=form.email.data,
+                password=form.password.data,
+                role=form.role.data
+            )
+            flash(f"User {form.username.data} created successfully")
+            return redirect(url_for('main.user_list'))
+        except ValueError as e:
+            flash(str(e))
+        except Exception as e:
+            logger.error(f"Error creating user: {str(e)}")
+            flash("An error occurred while creating the user")
+            
+    return render_template('main/user_form.html', form=form, title="New User")
+
+
+@bp.route('/user/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+def user_edit(user_id: int) -> Union[str, Response]:
+    """
+    Edit an existing user.
+    Only accessible by administrators.
+    """
+    if current_user.role != 'admin':
+        abort(403)
+        
+    user_service = UserService()
+    user = user_service.get_user_by_id(user_id)
+    if not user:
+        flash("User not found")
+        return redirect(url_for('main.user_list'))
+        
+    form = UserForm(obj=user)
+    if form.validate_on_submit():
+        user_data = {
+            'username': form.username.data,
+            'email': form.email.data,
+            'role': form.role.data
+        }
+        if form.password.data:
+            user_data['password'] = form.password.data
+            
+        try:
+            user_service.update_user(user, user_data)
+            flash(f"User {user.username} updated successfully")
+            return redirect(url_for('main.user_list'))
+        except ValueError as e:
+            flash(str(e))
+        except Exception as e:
+            logger.error(f"Error updating user: {str(e)}")
+            flash("An error occurred while updating the user")
+            
+    return render_template('main/user_form.html', form=form, title=f"Edit User: {user.username}")
+
+
+@bp.route('/user/<int:user_id>/delete', methods=['POST'])
+@login_required
+def user_delete(user_id: int) -> Response:
+    """
+    Delete a user.
+    Only accessible by administrators.
+    """
+    if current_user.role != 'admin':
+        abort(403)
+        
+    user_service = UserService()
+    user = user_service.get_user_by_id(user_id)
+    if not user:
+        flash("User not found")
+        return redirect(url_for('main.user_list'))
+        
+    if user.id == current_user.id:
+        flash("You cannot delete yourself")
+        return redirect(url_for('main.user_list'))
+        
+    try:
+        user_service.delete_user(user)
+        flash(f"User {user.username} deleted successfully")
+    except Exception as e:
+        logger.error(f"Error deleting user: {str(e)}")
+        flash("An error occurred while deleting the user")
+        
+    return redirect(url_for('main.user_list'))

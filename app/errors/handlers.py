@@ -12,6 +12,8 @@ def register_error_handlers(app):
     def not_found_error(error):
         """Handle 404 Not Found errors."""
         app.logger.warning(f"404 error: {request.url}")
+        if request.path.startswith('/api'):
+            return jsonify({'error': 'Not Found', 'message': str(error)}), 404
         return render_template('errors/404.html'), 404
 
     @app.errorhandler(500)
@@ -19,19 +21,34 @@ def register_error_handlers(app):
         """Handle 500 Internal Server Error."""
         app.logger.error(f"500 error: {str(error)}")
         db.session.rollback()  # Roll back any failed database sessions
+        if request.path.startswith('/api'):
+            return jsonify({'error': 'Internal Server Error', 'message': 'An unexpected error occurred'}), 500
         return render_template('errors/500.html'), 500
 
     @app.errorhandler(403)
     def forbidden_error(error):
         """Handle 403 Forbidden errors."""
         app.logger.warning(f"403 error: {request.url}")
+        if request.path.startswith('/api'):
+            return jsonify({'error': 'Forbidden', 'message': 'You do not have permission to access this resource'}), 403
         return render_template('errors/403.html'), 403
 
     @app.errorhandler(400)
     def bad_request_error(error):
         """Handle 400 Bad Request errors."""
         app.logger.warning(f"400 error: {request.url}")
+        if request.path.startswith('/api'):
+            return jsonify({'error': 'Bad Request', 'message': str(error)}), 400
         return render_template('errors/400.html'), 400
+
+    @app.errorhandler(401)
+    def unauthorized_error(error):
+        """Handle 401 Unauthorized errors."""
+        app.logger.warning(f"401 error: {request.url}")
+        if request.path.startswith('/api'):
+            message = getattr(error, 'description', 'Authentication is required to access this resource')
+            return jsonify({'error': 'Unauthorized', 'message': message}), 401
+        return render_template('errors/401.html'), 401
 
     @app.errorhandler(405)
     def method_not_allowed_error(error):

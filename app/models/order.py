@@ -190,6 +190,12 @@ class Order(db.Model):
                           onupdate=db.func.current_timestamp())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    updated_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
+    created_by = db.relationship('User', foreign_keys=[created_by_id], backref='orders_created')
+    updated_by = db.relationship('User', foreign_keys=[updated_by_id], backref='orders_updated')
+
     def __repr__(self):
         """
         Return a string representation of the Order object.

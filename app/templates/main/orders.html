@@ -4,7 +4,13 @@
 
 {% block content %}
     <h2>Order Form</h2>
+    {% if order and current_user.role == 'admin' %}
+        <div class="mb-3">
+            <small class="text-muted">
+                Created by: {{ order.created_by.username if order.created_by else 'Unknown' }} on {{ order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else 'N/A' }}<br>
+                Last updated by: {{ order.updated_by.username if order.updated_by else 'Unknown' }} on {{ order.updated_at.strftime('%Y-%m-%d %H:%M') if order.updated_at else 'N/A' }}
+            </small>
+        </div>
+    {% endif %}
     {{ render_form(form) }}
-
-
 {% endblock %}

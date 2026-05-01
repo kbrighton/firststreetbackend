@@ -51,7 +51,7 @@ class BaseRepository(Generic[T], ABC):
         """
         self.logger.debug(f"Getting {self.model.__name__} by ID: {id}")
         try:
-            entity = self.model.query.get(id)
+            entity = db.session.get(self.model, id)
             if entity and entity.deleted_at is None:
                 self.logger.debug(f"Found {self.model.__name__} with ID: {id}")
                 return entity
@@ -71,7 +71,8 @@ class BaseRepository(Generic[T], ABC):
         """
         self.logger.debug(f"Getting all active {self.model.__name__} entities")
         try:
-            entities = self.model.query.filter(self.model.deleted_at.is_(None)).all()
+            query = db.select(self.model).filter(self.model.deleted_at.is_(None))
+            entities = db.session.execute(query).scalars().all()
             self.logger.debug(f"Retrieved {len(entities)} active {self.model.__name__} entities")
             return entities
         except Exception as e:
@@ -302,8 +303,8 @@ class BaseRepository(Generic[T], ABC):
         """
         self.logger.debug(f"Getting all {self.model.__name__} entities including deleted")
         try:
-            entities = self.model.query.all()
-            self.logger.debug(f"Retrieved {len(entities)} {self.model.__name__} entities including deleted")
+            query = db.select(self.model)
+            entities = db.session.execute(query).scalars().all()
             return entities
         except Exception as e:
             self.logger.error(f"Error getting all {self.model.__name__} entities including deleted: {str(e)}")
@@ -318,7 +319,8 @@ class BaseRepository(Generic[T], ABC):
         """
         self.logger.debug(f"Getting all deleted {self.model.__name__} entities")
         try:
-            entities = self.model.query.filter(self.model.deleted_at.isnot(None)).all()
+            query = db.select(self.model).filter(self.model.deleted_at.isnot(None))
+            entities = db.session.execute(query).scalars().all()
             self.logger.debug(f"Retrieved {len(entities)} deleted {self.model.__name__} entities")
             return entities
         except Exception as e:

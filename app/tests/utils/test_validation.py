@@ -168,14 +168,14 @@ class TestValidationUtils:
             "zip": "12345",
             "phone": "123-456-7890"
         }
-        
+
         sanitized_data = validate_and_sanitize_customer_data(valid_data)
-        
+
         assert sanitized_data["cust_id"] == "12345"
-        assert sanitized_data["name"] == "Test Customer"
-        assert sanitized_data["email"] == "test@example.com"
+        assert sanitized_data["customer"] == "Test Customer"
+        assert sanitized_data["customer_email"] == "test@example.com"
         assert sanitized_data["zip"] == "12345"
-        assert sanitized_data["phone"] == "123-456-7890"
+        assert sanitized_data["telephone_1"] == "123-456-7890"
 
     def test_validate_and_sanitize_customer_data_invalid(self):
         """Test validating and sanitizing invalid customer data."""
