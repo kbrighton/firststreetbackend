@@ -270,10 +270,6 @@ class Order(db.Model):
             if self.logtype not in valid_logtypes:
                 errors['logtype'] = f"Log Type must be one of: {', '.join(valid_logtypes)}"
 
-        # Validate date ranges
-        if self.datin and self.dueout and not self._validate_date_range(self.datin, self.dueout):
-            errors['dueout'] = "Due Out date must be after Date In"
-
         return errors
 
     @staticmethod

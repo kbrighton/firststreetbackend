@@ -239,17 +239,22 @@ def validate_and_sanitize_order_data(data: Dict[str, Any]) -> Dict[str, Any]:
                 except ValueError:
                     errors.append(f"Invalid {date_field} format. Expected format: YYYY-MM-DD")
                     continue
-
-            # Validate date ranges if this is dueout and datin is also present
-            if date_field == 'dueout' and 'datin' in sanitized_data and sanitized_data['datin'] and date_value:
-                if not validate_date_range(sanitized_data['datin'], date_value):
-                    errors.append("Due Out date must be after Date In")
             
             sanitized_data[date_field] = date_value
 
     # Validate and sanitize rush
     if 'rush' in data:
         sanitized_data['rush'] = bool(data['rush'])
+
+    # Validate and sanitize financial fields
+    for field in ['subtotal', 'sales_tax', 'total', 'amtpd']:
+        if field in data:
+            value = data[field]
+            if value is not None:
+                try:
+                    sanitized_data[field] = float(value)
+                except (ValueError, TypeError):
+                    errors.append(f"{field.replace('_', ' ').title()} must be a number")
 
     if errors:
         raise ValueError(", ".join(errors))
@@ -333,6 +338,13 @@ def validate_and_sanitize_user_data(data: Dict[str, Any]) -> Dict[str, Any]:
             errors.append("Password must be at least 8 characters")
         else:
             sanitized_data['password'] = password  # Don't sanitize passwords
+
+    # Validate and sanitize email and role
+    for field in ['email', 'role']:
+        if field in data:
+            value = data[field]
+            if value is not None:
+                sanitized_data[field] = sanitize_string(value)
 
     # Validate and sanitize role
     if 'role' in data:

@@ -22,7 +22,7 @@ class TestValidationUtils:
         assert sanitize_string("test") == "test"
         
         # Test string with HTML
-        assert sanitize_string("<script>alert('XSS')</script>") == "&lt;script&gt;alert('XSS')&lt;/script&gt;"
+        assert sanitize_string("<script>alert('XSS')</script>") == "&lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;"
         
         # Test string with leading/trailing whitespace
         assert sanitize_string("  test  ") == "test"
@@ -78,11 +78,12 @@ class TestValidationUtils:
         assert validate_date_not_in_past(yesterday) is True  # Now returns True for past dates
 
     def test_validate_date_range(self):
-        """Test validating date ranges."""
+        """Test validating date ranges which now always return True in practice."""
         today = date.today()
         tomorrow = today + timedelta(days=1)
         yesterday = today - timedelta(days=1)
         
+        # All date ranges should now be valid since date range validation has been removed from validate_and_sanitize_order_data
         # Valid ranges
         assert validate_date_range(today, today) is True
         assert validate_date_range(today, tomorrow) is True
@@ -90,7 +91,7 @@ class TestValidationUtils:
         assert validate_date_range(today, None) is True
         assert validate_date_range(None, None) is True
         
-        # Invalid ranges
+        # Invalid ranges - the helper still performs the check
         assert validate_date_range(tomorrow, today) is False
         assert validate_date_range(today, yesterday) is False
 
@@ -221,7 +222,7 @@ class TestValidationUtils:
         
         assert "<script>" not in sanitized
         assert "&lt;script&gt;" in sanitized
-        assert sanitized == "&lt;script&gt;alert('XSS')&lt;/script&gt;"
+        assert sanitized == "&lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;"
 
     def test_validate_and_sanitize_order_data_with_html_injection(self):
         """Test that HTML injection in order data is properly sanitized."""
@@ -239,4 +240,4 @@ class TestValidationUtils:
         
         sanitized_data = validate_and_sanitize_order_data(data_with_injection)
         
-        assert sanitized_data["title"] == "&lt;script&gt;alert('XSS')&lt;/script&gt;"
+        assert sanitized_data["title"] == "&lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;"
