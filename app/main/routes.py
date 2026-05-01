@@ -287,14 +287,14 @@ def all_dueouts() -> str:  # sourcery skip: none-compare
 @login_required
 def user_list() -> str:
     """
-    Display a list of all users.
-    Only accessible by administrators.
+    Display a list of users.
+    Admins see all users, regular users see only their own profile.
     """
-    if current_user.role != 'admin':
-        abort(403)
-    
     user_service = UserService()
-    users = user_service.get_all_users()
+    if current_user.role == 'admin':
+        users = user_service.get_all_users()
+    else:
+        users = [current_user]
     return render_template('main/user_list.html', users=users)
 
 
@@ -334,9 +334,9 @@ def user_new() -> Union[str, Response]:
 def user_edit(user_id: int) -> Union[str, Response]:
     """
     Edit an existing user.
-    Only accessible by administrators.
+    Admins can edit anyone, regular users can only edit themselves.
     """
-    if current_user.role != 'admin':
+    if current_user.role != 'admin' and current_user.id != user_id:
         abort(403)
         
     user_service = UserService()
@@ -349,9 +349,11 @@ def user_edit(user_id: int) -> Union[str, Response]:
     if form.validate_on_submit():
         user_data = {
             'username': form.username.data,
-            'email': form.email.data,
-            'role': form.role.data
+            'email': form.email.data
         }
+        if hasattr(form, 'role') and form.role is not None:
+            user_data['role'] = form.role.data
+            
         if form.password.data:
             user_data['password'] = form.password.data
             

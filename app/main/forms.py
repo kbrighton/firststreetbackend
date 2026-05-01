@@ -167,8 +167,13 @@ class UserForm(FlaskForm):
 
     def __init__(self, *args, **kwargs):
         super(UserForm, self).__init__(*args, **kwargs)
+        from flask_login import current_user
         # If editing an existing user, password is not required
         if 'obj' in kwargs and kwargs['obj'] is not None:
             self.password.validators = [Optional(), Length(min=8)]
         else:
             self.password.validators = [DataRequired(), Length(min=8)]
+            
+        # Only admins can change roles
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            del self.role

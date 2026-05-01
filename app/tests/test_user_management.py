@@ -22,7 +22,30 @@ def test_user_list_as_admin(client, app, db_session):
         assert b'admin' in response.data
 
 def test_user_list_as_regular_user(client, app, db_session):
-    """Test that a regular user cannot view the user list."""
+    """Test that a regular user can view their own profile but not others."""
+    with app.test_request_context():
+        user = User(username='user', email='user@example.com', role='user')
+        user.set_password('password')
+        
+        other_user = User(username='other', email='other@example.com', role='user')
+        other_user.set_password('password')
+        
+        db_session.add(user)
+        db_session.add(other_user)
+        db_session.commit()
+
+        with client.session_transaction() as sess:
+            sess['_user_id'] = str(user.id)
+            sess['_fresh'] = True
+
+        response = client.get(url_for('main.user_list'))
+        assert response.status_code == 200
+        assert b'Manage My Profile' in response.data
+        assert b'user@example.com' in response.data
+        assert b'other@example.com' not in response.data
+
+def test_user_edit_own_profile(client, app, db_session):
+    """Test that a regular user can edit their own profile."""
     with app.test_request_context():
         user = User(username='user', email='user@example.com', role='user')
         user.set_password('password')
@@ -33,7 +56,39 @@ def test_user_list_as_regular_user(client, app, db_session):
             sess['_user_id'] = str(user.id)
             sess['_fresh'] = True
 
-        response = client.get(url_for('main.user_list'))
+        response = client.post(url_for('main.user_edit', user_id=user.id), data={
+            'username': 'updateduser',
+            'email': 'updated@example.com',
+            'password': 'newpassword123',
+            'submit': 'Submit'
+        }, follow_redirects=True)
+        
+        assert response.status_code == 200
+        assert b'User updateduser updated successfully' in response.data
+        
+        db_session.refresh(user)
+        assert user.username == 'updateduser'
+        assert user.check_password('newpassword123')
+        assert user.role == 'user'  # Role should not change
+
+def test_user_edit_other_profile_forbidden(client, app, db_session):
+    """Test that a regular user cannot edit another user's profile."""
+    with app.test_request_context():
+        user = User(username='user', email='user@example.com', role='user')
+        user.set_password('password')
+        
+        other_user = User(username='other', email='other@example.com', role='user')
+        other_user.set_password('password')
+        
+        db_session.add(user)
+        db_session.add(other_user)
+        db_session.commit()
+
+        with client.session_transaction() as sess:
+            sess['_user_id'] = str(user.id)
+            sess['_fresh'] = True
+
+        response = client.get(url_for('main.user_edit', user_id=other_user.id))
         assert response.status_code == 403
 
 def test_user_create_as_admin(client, app, db_session):

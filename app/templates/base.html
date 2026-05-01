@@ -43,6 +43,8 @@
                     {{ render_nav_item('main.all_dueouts', 'All Due Outs') }}
                     {% if current_user.role == 'admin' %}
                         {{ render_nav_item('main.user_list', 'User Management') }}
+                    {% else %}
+                        {{ render_nav_item('main.user_list', 'Manage My Profile') }}
                     {% endif %}
                     {{ render_nav_item('auth.logout', 'Logout') }}
                 {% endif %}
