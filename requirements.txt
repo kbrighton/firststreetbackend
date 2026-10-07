@@ -5,7 +5,7 @@ Flask-WTF
 Flask-Login~=0.6.3
 werkzeug
 Flask~=3.1.1
-SQLAlchemy~=2.0.9
+SQLAlchemy~=2.1.4
 bootstrap-flask
 python-dotenv
 Flask-marshmallow
