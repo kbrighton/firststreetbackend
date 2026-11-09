@@ -5,7 +5,7 @@ from flask import url_for
 class TestLegacyAPI:
     """Integration tests for Legacy API endpoints."""
 
-    def test_fetch_data(self, client, sample_order):
+    def test_fetch_data(self, client, sample_user, sample_order):
         """Test fetching orders data with the legacy endpoint."""
         # Login
         client.post(
@@ -45,7 +45,7 @@ class TestLegacyAPI:
         assert 'data' in data
         assert len(data['data']) <= 10  # Should be at most 10 items
 
-    def test_update_order_legacy(self, client, sample_order):
+    def test_update_order_legacy(self, client, sample_user, sample_order):
         """Test updating an order with the legacy endpoint."""
         # Login
         client.post(
@@ -74,7 +74,7 @@ class TestLegacyAPI:
         assert data['title'] == 'Updated via Legacy API'
         assert data['log'] == sample_order.log
 
-    def test_update_order_legacy_missing_id(self, client):
+    def test_update_order_legacy_missing_id(self, client, sample_user):
         """Test updating an order with the legacy endpoint without providing an ID."""
         # Login
         client.post(
@@ -93,7 +93,7 @@ class TestLegacyAPI:
         )
         assert response.status_code == 400  # Bad request
 
-    def test_update_order_legacy_nonexistent_id(self, client):
+    def test_update_order_legacy_nonexistent_id(self, client, sample_user):
         """Test updating a non-existent order with the legacy endpoint."""
         # Login
         client.post(

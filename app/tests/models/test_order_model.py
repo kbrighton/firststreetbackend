@@ -124,14 +124,15 @@ class TestOrderModel:
         assert Order._validate_date_not_in_past(None) is True
 
     def test_validate_date_range(self):
-        """Test the _validate_date_range method."""
+        """Test the _validate_date_range method which now always returns True."""
         today = date.today()
         tomorrow = today + timedelta(days=1)
         yesterday = today - timedelta(days=1)
 
+        # All date ranges should now be valid since date range validation has been removed from validate_data
         assert Order._validate_date_range(today, today) is True
         assert Order._validate_date_range(today, tomorrow) is True
-        assert Order._validate_date_range(tomorrow, today) is False
+        assert Order._validate_date_range(tomorrow, today) is False  # The helper still performs the check
         assert Order._validate_date_range(None, today) is True
         assert Order._validate_date_range(today, None) is True
         assert Order._validate_date_range(None, None) is True

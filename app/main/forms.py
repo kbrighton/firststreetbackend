@@ -1,6 +1,6 @@
 from typing import Any, Optional as OptionalType, Dict, List, Union
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, SubmitField, DateField, IntegerField, SelectField, Field
+from wtforms import StringField, BooleanField, SubmitField, DateField, IntegerField, SelectField, Field, PasswordField
 from wtforms.validators import Length, Optional, DataRequired, ValidationError, Regexp, NumberRange
 from datetime import date
 from app.utils.form_validators import validate_date_not_in_past, validate_alphanumeric, validate_date_range, validate_at_least_one_field
@@ -140,3 +140,40 @@ class DisplayDueouts(FlaskForm):
         validate_date_range
     ])
     submit = SubmitField("Submit")
+
+
+class UserForm(FlaskForm):
+    """
+    Form for creating and editing users.
+    """
+
+    username = StringField('Username', validators=[
+        DataRequired(message="Username is required"),
+        Length(min=3, max=64, message="Username must be between 3 and 64 characters"),
+        Regexp(r'^[A-Za-z0-9_.\-]+$', message="Username can only contain letters, numbers, underscores, periods, and hyphens")
+    ])
+    email = StringField('Email', validators=[
+        DataRequired(message="Email is required"),
+        Length(max=120, message="Email must be less than 120 characters")
+    ])
+    password = PasswordField('Password', validators=[
+        Optional(),
+        Length(min=8, message="Password must be at least 8 characters")
+    ])
+    role = SelectField('Role', choices=[('user', 'User'), ('admin', 'Admin')], validators=[
+        DataRequired(message="Role is required")
+    ])
+    submit = SubmitField('Submit')
+
+    def __init__(self, *args, **kwargs):
+        super(UserForm, self).__init__(*args, **kwargs)
+        from flask_login import current_user
+        # If editing an existing user, password is not required
+        if 'obj' in kwargs and kwargs['obj'] is not None:
+            self.password.validators = [Optional(), Length(min=8)]
+        else:
+            self.password.validators = [DataRequired(), Length(min=8)]
+            
+        # Only admins can change roles
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            del self.role

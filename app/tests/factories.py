@@ -8,7 +8,7 @@ generate test data with sensible defaults that can be overridden as needed.
 
 import factory
 from factory.faker import Faker
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from app.extensions import db
 from app.models.user import User
 from app.models.customer import Customer
@@ -21,7 +21,7 @@ class BaseFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         abstract = True
         sqlalchemy_session = db.session
-        sqlalchemy_session_persistence = "commit"
+        sqlalchemy_session_persistence = "flush"
 
 
 class UserFactory(BaseFactory):
@@ -33,8 +33,8 @@ class UserFactory(BaseFactory):
     username = factory.Sequence(lambda n: f"user{n}")
     email = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
     role = "user"
-    created_at = factory.LazyFunction(datetime.utcnow)
-    updated_at = factory.LazyFunction(datetime.utcnow)
+    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    updated_at = factory.LazyFunction(lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     deleted_at = None
     
     @factory.post_generation
@@ -60,9 +60,9 @@ class CustomerFactory(BaseFactory):
     city = factory.Faker('city')
     state = factory.Faker('state_abbr')
     zip = factory.Faker('zipcode')
-    telephone_1 = factory.Faker('phone_number')
-    created_at = factory.LazyFunction(datetime.utcnow)
-    updated_at = factory.LazyFunction(datetime.utcnow)
+    telephone_1 = "555-010-0000"
+    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    updated_at = factory.LazyFunction(lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     deleted_at = None
 
 
@@ -84,6 +84,6 @@ class OrderFactory(BaseFactory):
     sales_tax = factory.LazyAttribute(lambda obj: float(obj.subtotal) * 0.08)
     total = factory.LazyAttribute(lambda obj: float(obj.subtotal) + float(obj.sales_tax))
     rush = factory.Faker('boolean')
-    created_at = factory.LazyFunction(datetime.utcnow)
-    updated_at = factory.LazyFunction(datetime.utcnow)
+    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    updated_at = factory.LazyFunction(lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     deleted_at = None

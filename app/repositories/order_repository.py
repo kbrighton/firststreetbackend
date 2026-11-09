@@ -71,7 +71,7 @@ class OrderRepository(BaseRepository[Order]):
         orders_query = db.select(self.model).where(and_(*clauses)).order_by(self.model.datin.desc(), self.model.cust.desc())
         return db.session.execute(orders_query).scalars().all()
 
-    def filter(self, search: Optional[str] = None) -> Query:
+    def filter(self, search: Optional[str] = None) -> Any:
         """
         Filter non-deleted orders by search term (customer or title).
 
@@ -82,7 +82,7 @@ class OrderRepository(BaseRepository[Order]):
             Filtered query object with only non-deleted orders
         """
         # Start with a query that filters out deleted records
-        query = self.model.query.filter(self.model.deleted_at.is_(None))
+        query = db.select(self.model).filter(self.model.deleted_at.is_(None))
 
         if search:
             query = query.filter(or_(
@@ -91,7 +91,7 @@ class OrderRepository(BaseRepository[Order]):
             ))
         return query
 
-    def apply_sort(self, query: Query, sort_argument: Optional[str] = None) -> Query:
+    def apply_sort(self, query: Any, sort_argument: Optional[str] = None) -> Any:
         """
         Apply sorting to a query.
 
@@ -103,12 +103,18 @@ class OrderRepository(BaseRepository[Order]):
             Sorted query object
         """
         if sort_argument:
-            sort_order = [getattr(self.model, s[1:]).desc() if s[0] == '-' else getattr(self.model, s[1:])
-                          for s in sort_argument.split(',')]
+            sort_order = []
+            for s in sort_argument.split(','):
+                if s.startswith('-'):
+                    field_name = s[1:]
+                    sort_order.append(getattr(self.model, field_name).desc())
+                else:
+                    field_name = s
+                    sort_order.append(getattr(self.model, field_name))
             query = query.order_by(*sort_order)
         return query
 
-    def paginate(self, query: Query, page: int, per_page: int) -> Pagination:
+    def paginate(self, query: Any, page: int, per_page: int) -> Pagination:
         """
         Paginate a query.
 

@@ -239,17 +239,27 @@ def validate_and_sanitize_order_data(data: Dict[str, Any]) -> Dict[str, Any]:
                 except ValueError:
                     errors.append(f"Invalid {date_field} format. Expected format: YYYY-MM-DD")
                     continue
-
-            # Validate date ranges if this is dueout and datin is also present
-            if date_field == 'dueout' and 'datin' in sanitized_data and sanitized_data['datin'] and date_value:
-                if not validate_date_range(sanitized_data['datin'], date_value):
-                    errors.append("Due Out date must be after Date In")
             
             sanitized_data[date_field] = date_value
 
     # Validate and sanitize rush
     if 'rush' in data:
         sanitized_data['rush'] = bool(data['rush'])
+
+    # Validate and sanitize financial fields
+    for field in ['subtotal', 'sales_tax', 'total', 'amtpd']:
+        if field in data:
+            value = data[field]
+            if value is not None:
+                try:
+                    sanitized_data[field] = float(value)
+                except (ValueError, TypeError):
+                    errors.append(f"{field.replace('_', ' ').title()} must be a number")
+
+    # Pass through user tracking fields without modification
+    for field in ['created_by_id', 'updated_by_id']:
+        if field in data:
+            sanitized_data[field] = data[field]
 
     if errors:
         raise ValueError(", ".join(errors))
@@ -273,28 +283,48 @@ def validate_and_sanitize_customer_data(data: Dict[str, Any]) -> Dict[str, Any]:
     errors = []
     sanitized_data = {}
 
-    # Validate and sanitize cust_id
-    if 'cust_id' in data:
-        cust_id = data['cust_id']
-        if not validate_alphanumeric(cust_id) or not validate_length(cust_id, 5, 5):
-            errors.append("Customer ID must be exactly 5 alphanumeric characters")
-        else:
-            sanitized_data['cust_id'] = sanitize_string(cust_id)
+    # Map input fields to model fields if necessary
+    field_mapping = {
+        'name': 'customer',
+        'address': 'address_line_1',
+        'phone': 'telephone_1',
+        'email': 'customer_email',
+        'contact': 'bill_to_contact'
+    }
 
-    # Validate and sanitize name
-    if 'name' in data:
-        name = data['name']
-        if not validate_length(name, 1, 100):
-            errors.append("Name must be between 1 and 100 characters")
-        else:
-            sanitized_data['name'] = sanitize_string(name)
-
-    # Validate and sanitize other fields
-    for field in ['address', 'city', 'state', 'zip', 'phone', 'email', 'contact']:
-        if field in data:
-            value = data[field]
+    # Process all fields in data
+    for key, value in data.items():
+        model_key = field_mapping.get(key, key)
+        
+        if model_key == 'cust_id':
+            if not validate_alphanumeric(value) or not validate_length(value, 5, 5):
+                errors.append("Customer ID must be exactly 5 alphanumeric characters")
+            else:
+                sanitized_data[model_key] = sanitize_string(value)
+        elif model_key == 'customer':
+            if not validate_length(value, 1, 100):
+                errors.append("Customer name must be between 1 and 100 characters")
+            else:
+                sanitized_data[model_key] = sanitize_string(value)
+        elif model_key in ['address_line_1', 'address_line_2', 'city', 'state', 'zip', 
+                          'telephone_1', 'telephone_2', 'fax_number', 'tax_id', 
+                          'resale_no', 'customer_email', 'bill_to_contact',
+                          'ship_to_1_address_line_1', 'ship_to_1_address_line_2',
+                          'ship_to_1_city', 'ship_to_1_state', 'ship_to_1_zip']:
             if value is not None:
-                sanitized_data[field] = sanitize_string(value)
+                sanitized_data[model_key] = sanitize_string(value)
+        elif model_key == 'cust_since' and value:
+            if isinstance(value, str):
+                try:
+                    from datetime import datetime
+                    sanitized_data[model_key] = datetime.strptime(value, '%Y-%m-%d')
+                except ValueError:
+                    errors.append("Invalid date format for Customer Since. Expected YYYY-MM-DD")
+            else:
+                sanitized_data[model_key] = value
+        else:
+            # Pass through other fields (like id, created_at, updated_at if present)
+            sanitized_data[model_key] = value
 
     if errors:
         raise ValueError(", ".join(errors))
@@ -333,6 +363,13 @@ def validate_and_sanitize_user_data(data: Dict[str, Any]) -> Dict[str, Any]:
             errors.append("Password must be at least 8 characters")
         else:
             sanitized_data['password'] = password  # Don't sanitize passwords
+
+    # Validate and sanitize email and role
+    for field in ['email', 'role']:
+        if field in data:
+            value = data[field]
+            if value is not None:
+                sanitized_data[field] = sanitize_string(value)
 
     # Validate and sanitize role
     if 'role' in data:
