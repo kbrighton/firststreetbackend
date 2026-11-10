@@ -41,8 +41,13 @@ def validate_date_range(form: Any, field: Field) -> None:
     Raises:
         ValidationError: If the end date is before the start date
     """
-    if form.start_date.data and field.data and form.start_date.data > field.data:
+    if not is_valid_date_range(form.start_date.data, field.data):
         raise ValidationError('End date must be after start date')
+
+
+def is_valid_date_range(start_date: Optional[date], end_date: Optional[date]) -> bool:
+    """Return whether the date range follows the form's inclusive boundary rule."""
+    return not (start_date and end_date and start_date > end_date)
 
 
 def validate_alphanumeric(form: Any, field: Field) -> None:

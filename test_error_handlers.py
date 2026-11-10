@@ -1,6 +1,6 @@
 import unittest
 from app import create_app
-from flask import url_for, jsonify
+from flask import abort
 from app.errors.exceptions import ResourceNotFoundError, ValidationError, AuthorizationError
 
 class TestErrorHandlers(unittest.TestCase):
@@ -9,6 +9,7 @@ class TestErrorHandlers(unittest.TestCase):
     def setUp(self):
         """Set up the test environment."""
         self.app = create_app('testing')
+        self.app.config['PROPAGATE_EXCEPTIONS'] = False
         self.app_context = self.app.app_context()
         self.app_context.push()
         self.client = self.app.test_client()
@@ -41,7 +42,7 @@ class TestErrorHandlers(unittest.TestCase):
         # Create a route that returns a 403 error
         @self.app.route('/forbidden')
         def forbidden():
-            return self.app.response_class(status=403)
+            abort(403)
 
         response = self.client.get('/forbidden')
         self.assertEqual(response.status_code, 403)
@@ -53,7 +54,7 @@ class TestErrorHandlers(unittest.TestCase):
         # Create a route that returns a 400 error
         @self.app.route('/bad-request')
         def bad_request():
-            return self.app.response_class(status=400)
+            abort(400)
 
         response = self.client.get('/bad-request')
         self.assertEqual(response.status_code, 400)

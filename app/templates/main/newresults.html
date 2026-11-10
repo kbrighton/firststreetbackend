@@ -67,7 +67,7 @@
                 multiColumn: true,
                 server: {
                     url: (prev, columns) => {
-                        const columnIds = ['id', 'log', 'artlo', 'cust', 'title', 'prior', 'datin', 'dueout', 'colorf', 'print_n', 'rush', 'logtype', 'datout'];
+                        const columnIds = ['id', 'log', 'artlo', 'cust', 'title', 'prior', 'datin', 'dueout', 'colorf', 'print_n', 'logtype', 'rush', 'datout'];
                         const sort = columns.map(col => (col.direction === 1 ? '+' : '-') + columnIds[col.index]);
                         return updateUrl(prev, {sort});
                     },
@@ -96,7 +96,10 @@
                 if (savedValue !== ev.target.textContent) {
                     fetch('/api/data', {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                        },
                         body: JSON.stringify({
                             id: ev.target.dataset.elementId,
                             [ev.target.dataset.columnId]: ev.target.textContent

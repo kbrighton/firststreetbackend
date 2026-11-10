@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 
-from app.extensions import db, migrate, bootstrap, login, marshmallow
+from app.extensions import db, migrate, bootstrap, login, marshmallow, csrf
 from app.logging import init_logging
 from config import config
 
@@ -68,6 +68,7 @@ def _init_extensions(app):
     marshmallow.init_app(app)
     bootstrap.init_app(app)
     login.init_app(app)
+    csrf.init_app(app)
 
 
 def _register_blueprints(app):
