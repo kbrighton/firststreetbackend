@@ -1,0 +1,32 @@
+pre {
+  background: #ddd;
+  padding: 10px;
+}
+
+h2 {
+  margin-top: 20px;
+}
+
+.table thead.thead-dark th {
+  color: #fff;
+  background-color: #343a40;
+  border-color: #454d55;
+}
+
+.orders-sort-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.orders-sort-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+footer {
+  margin: 20px;
+}

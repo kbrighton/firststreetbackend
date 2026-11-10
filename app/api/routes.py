@@ -1,5 +1,6 @@
 from typing import Dict, List, Any, Optional, Union, Tuple
 from flask import request, abort, jsonify, make_response, Response
+from flask_wtf.csrf import generate_csrf
 from werkzeug.exceptions import HTTPException
 from flask_login import login_required, current_user, login_user, logout_user
 import logging
@@ -13,10 +14,18 @@ logger = logging.getLogger(__name__)
 from app.extensions import db
 from app.api import bp
 from app.models import Order, Customer, User
-from app.schema import (
-    order_schema, orders_schema, 
+from app.schemas import (
+    order_detail_schema, order_schema, orders_schema, 
     customer_schema, customers_schema,
     user_schema, users_schema
+)
+from app.schemas.validation_schemas import (
+    DueoutArgsSchema,
+    LoginArgsSchema,
+    LogArgsSchema,
+    OrderLoadSchema,
+    OrderSearchArgsSchema,
+    UserLoadSchema,
 )
 from app.services.order_service import OrderService
 from app.services.customer_service import CustomerService
@@ -45,11 +54,18 @@ def fetch_data() -> Dict[str, Any]:
 
     # Use service to filter orders
     query = order_service.filter_orders(search=search)
-    total_orders = db.session.scalar(db.select(db.func.count()).select_from(query.subquery()))
 
     # Apply sorting
     sort_argument = request.args.get('sort')
-    query = order_service.order_query(query, sort_argument=sort_argument)
+    try:
+        sorted_query = order_service.order_query(query, sort_argument=sort_argument)
+    except ValueError as error:
+        abort(400, description=str(error))
+
+    total_orders = db.session.scalar(
+        db.select(db.func.count()).select_from(query.subquery())
+    )
+    query = sorted_query
 
     # pagination
     start = request.args.get('start', type=int, default=-1)
@@ -77,19 +93,18 @@ def update_order() -> Tuple[str, int]:
         Empty string and HTTP status code.
     """
     data = request.get_json()
-    logger.info(f"Updating order with data: {data}")
-    if 'id' not in data:
+    if not data or 'id' not in data:
         logger.error("No id provided in update request")
         abort(400)
 
+    logger.info("Updating order id=%s", data['id'])
     # Create service instance
     order_service = OrderService()
 
     # Use service to get order by ID
     order = order_service.get_order_by_id(data['id'])
-    logger.info(f"Found order with id {order}")
     if order is None:
-        logger.error(f"Order with id {data['id']} not found")
+        logger.error("Order id=%s not found", data['id'])
         abort(404)
 
     try:
@@ -100,14 +115,14 @@ def update_order() -> Tuple[str, int]:
                 continue
             if field in ORDER_FIELDS:
                 update_data[field] = data[field]
-                logger.info(f"Will update {field} to {data[field]} in {order}")
+                logger.debug("Updating order id=%s field=%s", order.id, field)
 
         # Use service to update order
         order_service.update_order(order, update_data)
-        logger.info(f"Successfully updated order {order.log}")
+        logger.info("Successfully updated order id=%s", order.id)
         return '', 204
-    except Exception as e:
-        logger.error(f"Error updating order: {str(e)}")
+    except Exception:
+        logger.error("Error updating order id=%s", data['id'])
         abort(500)
 
 
@@ -121,32 +136,23 @@ def get_orders() -> Dict[str, Any]:
     Returns:
         Dictionary with paginated order data.
     """
-    # Get query parameters
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
-    search = request.args.get('search')
-    sort = request.args.get('sort')
-
-    # Create service instance
+    args = OrderSearchArgsSchema().load(request.args)
     order_service = OrderService()
+    page = args['page']
+    per_page = args['per_page']
+    try:
+        paginated = order_service.search_orders_paginated(
+            args.get('cust'), args.get('title'), page, per_page, args.get('sort')
+        )
+    except ValueError as error:
+        abort(400, description=str(error))
 
-    # Filter orders
-    query = order_service.filter_orders(search=search)
-
-    # Apply sorting
-    if sort:
-        query = order_service.order_query(query, sort_argument=sort)
-
-    # Apply pagination
-    paginated = order_service.paginate_query(query, page, per_page)
-
-    # Prepare response
     return {
-        'items': orders_schema.dump(paginated.items),
+        'data': orders_schema.dump(paginated.items),
+        'total': paginated.total,
         'page': page,
         'per_page': per_page,
-        'total': paginated.total,
-        'pages': paginated.pages
+        'pages': paginated.pages,
     }
 
 
@@ -171,7 +177,7 @@ def get_order(id: int) -> Response:
     if not order:
         abort(404, description="Order not found")
 
-    return jsonify(order_schema.dump(order))
+    return jsonify(order_detail_schema.dump(order))
 
 
 @bp.route('/orders/log/<log_id>')
@@ -189,13 +195,14 @@ def get_order_by_log(log_id: str) -> Response:
     Raises:
         404: If order not found.
     """
+    args = LogArgsSchema().load({'log': log_id})
     order_service = OrderService()
-    order = order_service.get_order_by_log(log_id)
+    order = order_service.get_order_by_log(args['log'])
 
     if not order:
         abort(404, description="Order not found")
 
-    return jsonify(order_schema.dump(order))
+    return jsonify(order_detail_schema.dump(order))
 
 
 @bp.route('/orders', methods=['POST'])
@@ -215,6 +222,7 @@ def create_order() -> Tuple[Response, int]:
     data = request.get_json()
     if not data:
         abort(400, description="No data provided")
+    data = OrderLoadSchema().load(data)
 
     order_service = OrderService()
 
@@ -253,6 +261,7 @@ def update_order_by_id(id: int) -> Response:
     data = request.get_json()
     if not data:
         abort(400, description="No data provided")
+    data = OrderLoadSchema().load(data, partial=True)
 
     order_service = OrderService()
     order = order_service.get_order_by_id(id)
@@ -317,27 +326,14 @@ def get_dueouts() -> Response:
     Raises:
         400: If date format is invalid or end date is before start date.
     """
-    from app.utils.validation import sanitize_string, validate_date_range
+    args = DueoutArgsSchema().load(request.args)
+    order_service = OrderService()
+    dueouts = order_service.get_dueouts(
+        start=args['start_date'],
+        end=args['end_date'],
+    )
 
-    # Get query parameters
-    start_date = sanitize_string(request.args.get('start_date'))
-    end_date = sanitize_string(request.args.get('end_date'))
-
-    try:
-        # Parse dates if provided
-        start: Optional[date] = datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None
-        end: Optional[date] = datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None
-
-        # Validate date range if both dates are provided
-        if start and end and not validate_date_range(start, end):
-            abort(400, description="End date must be after start date")
-
-        order_service = OrderService()
-        dueouts = order_service.get_dueouts(start=start, end=end)
-
-        return jsonify(orders_schema.dump(dueouts))
-    except ValueError:
-        abort(400, description="Invalid date format. Use YYYY-MM-DD")
+    return jsonify(orders_schema.dump(dueouts))
 
 
 # Customer endpoints
@@ -546,8 +542,9 @@ def api_login() -> Response:
     from app.utils.validation import sanitize_string
 
     data = request.get_json()
-    if not data or 'username' not in data or 'password' not in data:
+    if not data or not isinstance(data, dict) or 'username' not in data or 'password' not in data:
         abort(400, description="Username and password required")
+    data = LoginArgsSchema().load(data)
 
     # Sanitize inputs
     username = sanitize_string(data['username'])
@@ -561,7 +558,7 @@ def api_login() -> Response:
         if not user:
             abort(401, description="Invalid username or password")
 
-        login_user(user, remember=data.get('remember', False))
+        login_user(user, remember=data['remember'])
 
         return jsonify({
             'message': 'Login successful',
@@ -589,6 +586,39 @@ def api_logout() -> Response:
     """
     logout_user()
     return jsonify({'message': 'Logout successful'})
+
+
+@bp.route('/auth/me')
+@login_required
+def api_current_user() -> Response:
+    """
+    Get the currently authenticated user.
+
+    Returns:
+        JSON response with the current user's id, username, email and role.
+    """
+    return jsonify({
+        'user': {
+            'id': current_user.id,
+            'username': current_user.username,
+            'email': current_user.email,
+            'role': current_user.role,
+            'created_at': current_user.created_at.isoformat() if current_user.created_at else None,
+        }
+    })
+
+
+@bp.route('/auth/csrf')
+def api_csrf_token() -> Response:
+    """
+    Get a CSRF token for state-changing API requests.
+
+    Send the token in the X-CSRFToken header on POST, PUT and DELETE requests.
+
+    Returns:
+        JSON response with the CSRF token.
+    """
+    return jsonify({'csrf_token': generate_csrf()})
 
 
 # User endpoints (admin only)
@@ -653,28 +683,12 @@ def create_user() -> Tuple[Response, int]:
         400: If required fields are missing or validation fails.
         500: If there's an error creating the user.
     """
-    from app.utils.validation import sanitize_string
-
-    data = request.get_json()
-    if not data or 'username' not in data or 'email' not in data or 'password' not in data:
-        abort(400, description="Username, email, and password required")
-
-    # Sanitize inputs
-    username = sanitize_string(data['username'])
-    email = sanitize_string(data['email'])
-    # Don't sanitize password
-    password = data['password']
-    role = sanitize_string(data.get('role', 'user'))
+    data = UserLoadSchema().load(request.get_json())
 
     user_service = UserService()
 
     try:
-        user = user_service.create_user(
-            username=username,
-            email=email,
-            password=password,
-            role=role
-        )
+        user = user_service.create_user(**data)
         return jsonify(user_schema.dump(user)), 201
     except ValueError as e:
         logger.warning(f"Validation error creating user: {str(e)}")
@@ -708,8 +722,6 @@ def update_user(id: int) -> Response:
         404: If user not found.
         500: If there's an error updating the user.
     """
-    from app.utils.validation import sanitize_string
-
     # Check if user is updating themselves or is admin
     if id != current_user.id and current_user.role != 'admin':
         abort(403, description="You can only update your own user information unless you're an admin")
@@ -717,28 +729,15 @@ def update_user(id: int) -> Response:
     data = request.get_json()
     if not data:
         abort(400, description="No data provided")
-
-    # Sanitize inputs
-    sanitized_data: Dict[str, Any] = {}
-    if 'username' in data:
-        sanitized_data['username'] = sanitize_string(data['username'])
-    if 'email' in data:
-        sanitized_data['email'] = sanitize_string(data['email'])
-    if 'password' in data:
-        # Don't sanitize password
-        sanitized_data['password'] = data['password']
-    if 'role' in data:
-        sanitized_data['role'] = sanitize_string(data['role'])
+    if 'role' in data and current_user.role != 'admin':
+        abort(403, description="Only admins can change user roles")
+    sanitized_data = UserLoadSchema().load(data, partial=True)
 
     user_service = UserService()
     user = user_service.get_user_by_id(id)
 
     if not user:
         abort(404, description="User not found")
-
-    # Only admins can change roles
-    if 'role' in sanitized_data and current_user.role != 'admin':
-        abort(403, description="Only admins can change user roles")
 
     try:
         updated_user = user_service.update_user(user, sanitized_data)

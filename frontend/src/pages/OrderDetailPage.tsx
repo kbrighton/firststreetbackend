@@ -1,0 +1,1 @@
+export { OrderFormPage as OrderDetailPage } from './OrderFormPage';
