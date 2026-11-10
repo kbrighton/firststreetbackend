@@ -27,7 +27,13 @@ class CustomerService(BaseService[Customer]):
                 If not provided, a new instance will be created.
         """
         repository = customer_repository or CustomerRepository()
-        super().__init__(repository, Customer, validate_and_sanitize_customer_data, sanitize_string)
+        # Resolve the helpers at call time so they can be patched on this module.
+        super().__init__(
+            repository,
+            Customer,
+            lambda data: validate_and_sanitize_customer_data(data),
+            lambda value: sanitize_string(value),
+        )
 
     def get_customer_by_id(self, customer_id: int) -> Optional[Customer]:
         """

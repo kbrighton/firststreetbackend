@@ -110,8 +110,8 @@ class Customer(db.Model):
                 errors['cust_id'] = "Customer ID must be exactly 5 alphanumeric characters"
 
         # Validate customer name
-        if self.customer:
-            if not self._validate_length(self.customer, 1, 255):
+        if self.customer is not None:
+            if not self._validate_length(self.customer.strip(), 1, 255):
                 errors['customer'] = "Customer name must be between 1 and 255 characters"
 
         # Validate email

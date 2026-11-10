@@ -25,7 +25,7 @@ class TestOrderFlows:
         # Navigate to the new order page
         response = client.get('/order')
         assert response.status_code == 200
-        assert 'Create New Order' in response.data.decode('utf-8')
+        assert 'Order Form' in response.data.decode('utf-8')
         
         # Convert date objects to strings for form submission
         order_data = valid_order_data.copy()

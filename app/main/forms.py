@@ -6,6 +6,33 @@ from datetime import date
 from app.utils.form_validators import validate_date_not_in_past, validate_alphanumeric, validate_date_range, validate_at_least_one_field
 
 
+class WholeNumberField(IntegerField):
+    """
+    Integer field for whole numbers stored in float columns.
+
+    Renders 100.0 as "100" and accepts whole-number input such as "100.0",
+    so existing orders can be re-submitted without changes.
+    """
+
+    def _value(self) -> str:
+        if self.raw_data:
+            return self.raw_data[0]
+        if isinstance(self.data, float) and self.data.is_integer():
+            return str(int(self.data))
+        return super()._value()
+
+    def process_formdata(self, valuelist: List[Any]) -> None:
+        if valuelist and valuelist[0] not in (None, ''):
+            try:
+                number = float(valuelist[0])
+            except (TypeError, ValueError):
+                number = None
+            if number is not None and number.is_integer():
+                self.data = int(number)
+                return
+        super().process_formdata(valuelist)
+
+
 class OrderForm(FlaskForm):
     """
     Form for creating and editing orders.
@@ -36,7 +63,7 @@ class OrderForm(FlaskForm):
         Optional(),
         validate_date_not_in_past
     ])
-    print_n = IntegerField("Quantity", validators=[
+    print_n = WholeNumberField("Quantity", validators=[
         Optional(),
         NumberRange(min=1, message="Quantity must be a positive number")
     ])
@@ -55,7 +82,7 @@ class OrderForm(FlaskForm):
                                    ("DG", "Digital Graphics"), ("GM", "General Maintenance"),("DTF", "Direct to Film"),
                                    ("PP", "Promotional Products")],
                           validators=[DataRequired(message="Log Type is required")])
-    colorf = IntegerField("# of Colors", validators=[
+    colorf = WholeNumberField("# of Colors", validators=[
         Optional(),
         NumberRange(min=0, message="Number of colors must be a non-negative number")
     ])

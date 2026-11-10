@@ -111,8 +111,10 @@ class TestUserService:
             assert user.email == "test@example.com"
             assert user.role == "user"
             
-            # Check password was set
-            user.set_password.assert_called_once_with("password123")
+            # Check password was set on the created user before it was saved
+            created_user = mock_repository.create.return_value
+            created_user.set_password.assert_called_once_with("password123")
+            mock_repository.update.assert_called_once_with(created_user, {})
 
     def test_create_user_existing_username(self, service, mock_repository):
         """Test creating a user with an existing username."""

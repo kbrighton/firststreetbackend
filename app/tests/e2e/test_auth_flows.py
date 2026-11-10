@@ -69,10 +69,17 @@ class TestAuthFlows:
             remember=True
         )
         
-        # Check that the session cookie has the remember flag
-        cookies = client.cookie_jar
-        for cookie in cookies:
-            if cookie.name == 'session':
-                # The remember flag is set in the cookie's expiration
-                assert cookie.expires is not None
-                break
+        assert response.status_code == 200
+
+        # Flask-Login stores "remember me" in a persistent remember_token cookie
+        remember_cookie = client.get_cookie('remember_token')
+        assert remember_cookie is not None
+        assert remember_cookie.expires is not None
+
+    def test_login_without_remember_me(self, client, sample_user, valid_user_data):
+        """Test that no persistent login cookie is set without remember me."""
+        response = login(client, valid_user_data['username'], valid_user_data['password'])
+
+        assert response.status_code == 200
+        assert 'Logout' in response.data.decode('utf-8')
+        assert client.get_cookie('remember_token') is None

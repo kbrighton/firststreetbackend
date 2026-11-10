@@ -20,7 +20,7 @@ class Config(object):
 
     # SQLAlchemy settings
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_RECORD_QUERIES = True
+    SQLALCHEMY_RECORD_QUERIES = False
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DATABASE_URL', 
         f'sqlite:///{os.path.join(basedir, "app.db")}'
@@ -29,6 +29,14 @@ class Config(object):
     # UI settings
     BOOTSTRAP_BOOTSWATCH_THEME = 'lumen'
     WTF_CSRF_CHECK_DEFAULT = True
+    WTF_CSRF_HEADERS = ['X-CSRFToken']
+
+    # Session cookie settings
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = False
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
 
     # Logging settings
     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT', False)
@@ -50,6 +58,8 @@ class ProductionConfig(Config):
     DEBUG = False
     DEVELOPMENT = False  # Explicitly set to False for production
     WTF_CSRF_ENABLED = True
+    SESSION_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = True
 
     @classmethod
     def init_app(cls, app):
@@ -88,6 +98,7 @@ class DevelopmentConfig(Config):
     """Development environment configuration."""
     DEVELOPMENT = True
     DEBUG = True
+    SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DEV_DATABASE_URL', 
         os.environ.get('DATABASE_URL', Config.SQLALCHEMY_DATABASE_URI)
@@ -104,6 +115,7 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     """Testing environment configuration."""
     TESTING = True
+    SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'TEST_DATABASE_URL', 
         f'sqlite:///{os.path.join(basedir, "test.db")}'

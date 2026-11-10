@@ -1,10 +1,11 @@
-import pytest
+from datetime import date, timedelta
 from unittest.mock import MagicMock, patch
-from app.services.order_service import OrderService
+
+import pytest
+
 from app.models.order import Order
 from app.repositories.order_repository import OrderRepository
-from app.utils.validation import validate_and_sanitize_order_data, sanitize_string
-from datetime import date, timedelta
+from app.services.order_service import OrderService
 
 
 class TestOrderService:
@@ -159,6 +160,23 @@ class TestOrderService:
             assert len(orders) == 1
             assert orders[0].log == "12345"
             assert orders[0].title == "Test Order"
+
+    def test_search_orders_paginated(self, mock_repository):
+        """Test paginated order searches sanitize filters before querying."""
+        pagination = mock_repository.search_paginated.return_value
+
+        with patch(
+            'app.services.order_service.sanitize_string',
+            side_effect=lambda value: f"sanitized_{value}" if value else None,
+        ) as mock_sanitize:
+            service = OrderService(order_repository=mock_repository)
+            result = service.search_orders_paginated("12345", "Test", 2, 20)
+
+        assert mock_sanitize.call_count == 2
+        mock_repository.search_paginated.assert_called_once_with(
+            "sanitized_12345", "sanitized_Test", 2, 20, None
+        )
+        assert result is pagination
 
     def test_filter_orders(self, service, mock_repository):
         """Test filtering orders."""

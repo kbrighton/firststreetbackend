@@ -25,21 +25,18 @@ def login(client: FlaskClient, username: str, password: str, remember: bool = Fa
         None
     """
     response = client.get('/auth/login')
-    soup = BeautifulSoup(response.data, 'html.parser')
+    # Extract CSRF token from the form (absent when CSRF is disabled in testing)
+    csrf_token = get_csrf_token(response.data)
+    data = {
+        'username': username,
+        'password': password,
+        'csrf_token': csrf_token
+    }
+    # Browsers omit unchecked checkboxes; any submitted value counts as checked
+    if remember:
+        data['remember_me'] = 'y'
     
-    # Extract CSRF token from the form
-    csrf_token = soup.find('input', {'name': 'csrf_token'})['value']
-    
-    return client.post(
-        '/auth/login',
-        data={
-            'username': username,
-            'password': password,
-            'remember_me': remember,
-            'csrf_token': csrf_token
-        },
-        follow_redirects=True
-    )
+    return client.post('/auth/login', data=data, follow_redirects=True)
 
 
 def logout(client: FlaskClient) -> None:
@@ -127,7 +124,8 @@ def check_flash_message(response: Any, message: str) -> bool:
         True if the flash message is found, False otherwise.
     """
     soup = BeautifulSoup(response.data, 'html.parser')
-    flash_messages = soup.find_all(class_='flash-message')
+    # Bootstrap-Flask's render_messages renders flashed messages as alerts
+    flash_messages = soup.find_all(class_=['flash-message', 'alert'])
     
     for flash in flash_messages:
         if message in flash.text:

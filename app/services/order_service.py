@@ -6,16 +6,16 @@ including CRUD operations, search functionality, filtering, sorting, and data va
 It handles order creation, updates, deletion, and querying while ensuring data integrity.
 """
 
-from typing import List, Optional, Dict, Any, Union
 from datetime import date
-from sqlalchemy.orm import Query
-from flask_sqlalchemy.pagination import Pagination
+from typing import List, Optional, Dict, Any
+
 from flask_login import current_user
+from flask_sqlalchemy.pagination import Pagination
 
 from app.models import Order
 from app.repositories.order_repository import OrderRepository
-from app.utils.validation import validate_and_sanitize_order_data, sanitize_string
 from app.services.base_service import BaseService
+from app.utils.validation import validate_and_sanitize_order_data, sanitize_string
 
 
 class OrderService(BaseService[Order]):
@@ -33,7 +33,13 @@ class OrderService(BaseService[Order]):
                 If not provided, a new instance will be created.
         """
         repository = order_repository or OrderRepository()
-        super().__init__(repository, Order, validate_and_sanitize_order_data, sanitize_string)
+        # Resolve the helpers at call time so they can be patched on this module.
+        super().__init__(
+            repository,
+            Order,
+            lambda data: validate_and_sanitize_order_data(data),
+            lambda value: sanitize_string(value),
+        )
 
     def get_order_by_log(self, log_id: str) -> Optional[Order]:
         """
@@ -171,6 +177,22 @@ class OrderService(BaseService[Order]):
         sanitized_title = self.sanitize_search_input(title)
 
         return self.repository.search(sanitized_cust, sanitized_title)
+
+    def search_orders_paginated(
+        self,
+        cust: Optional[str],
+        title: Optional[str],
+        page: int,
+        per_page: int,
+        sort_argument: Optional[str] = None,
+    ) -> Pagination:
+        """Search for orders and return only the requested database page."""
+        sanitized_cust = self.sanitize_search_input(cust)
+        sanitized_title = self.sanitize_search_input(title)
+
+        return self.repository.search_paginated(
+            sanitized_cust, sanitized_title, page, per_page, sort_argument
+        )
 
     def filter_orders(self, search: Optional[str] = None) -> Any:
         """
