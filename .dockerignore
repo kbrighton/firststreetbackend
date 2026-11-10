@@ -1,0 +1,32 @@
+# Version control and IDE files
+.git
+.github
+.idea
+.vscode
+.junie
+
+# Python environments and caches
+.venv
+venv
+env
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.coverage
+coverage.xml
+coverage_reports
+htmlcov
+
+# Local data, logs and secrets
+.env
+*.db
+*.sqlite
+*.sqlite3
+logs
+*.log
+
+# Frontend build tooling and output (not served by this image yet)
+frontend/node_modules
+frontend/dist
+frontend/test-results
+frontend/playwright-report
