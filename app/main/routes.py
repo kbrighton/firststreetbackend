@@ -6,20 +6,18 @@ for order management, search functionality, and due-out tracking. It uses the se
 layer to interact with the database and implements proper error handling and logging.
 """
 
-from typing import List, Dict, Any, Tuple, Optional, Union
 from datetime import date
+from typing import List, Tuple, Optional, Union
+
 from flask import render_template, redirect, url_for, request, flash, abort, Response
 from flask_login import login_required, current_user
-from sqlalchemy import and_, or_
 
-from app.extensions import db
 from app.logging import get_logger
 from app.main import bp
-from app.models import Order, User
+from app.models import Order
 from app.schemas import orders_schema
 from app.services.order_service import OrderService
 from app.services.user_service import UserService
-from app.utils.pagination import SimplePagination
 from app.utils.form_utils import extract_form_data
 from .forms import OrderForm, SearchForm, SearchLog, DisplayDueouts, UserForm
 
@@ -126,29 +124,17 @@ def search_result() -> Union[str, Response]:
     # Create service instance
     order_service = OrderService()
 
-    # Use the service to search for orders
-    orders = order_service.search_orders(cust=cust, title=title)
+    page = max(request.args.get('page', 1, type=int) or 1, 1)
+    per_page = 20
+    pagination = order_service.search_orders_paginated(
+        cust=cust, title=title, page=page, per_page=per_page
+    )
 
-    # Convert to list for pagination
-    orders_list = list(orders)
-
-    if not orders_list:
+    if pagination.total == 0:
         flash("Could not find any orders that match")
         return redirect(url_for("main.search_form"))
 
-    # Create a paginated response
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-    total = len(orders_list)
-    start = (page - 1) * per_page
-    end = min(start + per_page, total)
-
-    # Manual pagination
-    items = orders_list[start:end]
-
-    # Create a pagination object using our utility class
-    pagination = SimplePagination(items, page, per_page, total)
-
+    items = pagination.items
     titles = DUEOUT_TITLES
     data = orders_schema.dump(items)
 

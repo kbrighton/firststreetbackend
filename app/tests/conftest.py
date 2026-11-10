@@ -1,3 +1,7 @@
+import os
+
+os.environ.setdefault('TEST_DATABASE_URL', 'sqlite:///:memory:')
+
 import pytest
 from app import create_app
 from app.extensions import db

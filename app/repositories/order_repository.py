@@ -7,15 +7,26 @@ filtering, sorting, and pagination capabilities.
 """
 
 from datetime import date
-from typing import Optional, Type, List, Any, Union
-from sqlalchemy.orm import Query
-from flask_sqlalchemy.pagination import Pagination
+from typing import Optional, Type, List, Any
 
+from flask_sqlalchemy.pagination import Pagination
 from sqlalchemy import and_, or_
+from sqlalchemy.orm import load_only
 
 from app.extensions import db
 from app.models import Order
 from app.repositories.base_repository import BaseRepository
+
+
+SORTABLE_ORDER_FIELDS = frozenset({
+    'id', 'log', 'artlo', 'cust', 'title', 'prior', 'datin', 'dueout',
+    'colorf', 'print_n', 'logtype', 'rush', 'datout',
+})
+ORDER_LIST_FIELDS = (
+    'id', 'log', 'cust', 'title', 'datin', 'artout', 'dueout', 'print_n',
+    'artlo', 'prior', 'logtype', 'colorf', 'rush', 'ref_artlo', 'howship',
+    'datout', 'created_at', 'updated_at',
+)
 
 
 class OrderRepository(BaseRepository[Order]):
@@ -30,6 +41,12 @@ class OrderRepository(BaseRepository[Order]):
         The SQLAlchemy model class that this repository handles.
         """
         return Order
+
+    def _with_list_projection(self, query: Any) -> Any:
+        """Load only the fields serialized by the order list schema."""
+        return query.options(
+            load_only(*(getattr(self.model, field) for field in ORDER_LIST_FIELDS))
+        )
 
     def get_by_log(self, log_id: str) -> Optional[Order]:
         """
@@ -48,7 +65,23 @@ class OrderRepository(BaseRepository[Order]):
         )
         return db.session.execute(query).scalar_one_or_none()
 
-    def search(self, cust: str = None, title: str = None) -> List[Order]:
+    def _search_query(
+        self, cust: Optional[str] = None, title: Optional[str] = None
+    ) -> Any:
+        """Build the filtered, consistently ordered order-search query."""
+        clauses = [self.model.deleted_at.is_(None)]
+
+        if cust:
+            clauses.append(self.model.cust.ilike(f'%{cust}%'))
+
+        if title:
+            clauses.append(self.model.title.ilike(f'%{title}%'))
+
+        return db.select(self.model).where(and_(*clauses)).order_by(
+            self.model.datin.desc(), self.model.cust.desc(), self.model.id.desc()
+        )
+
+    def search(self, cust: Optional[str] = None, title: Optional[str] = None) -> List[Order]:
         """
         Search for non-deleted orders by customer and/or title.
 
@@ -59,17 +92,26 @@ class OrderRepository(BaseRepository[Order]):
         Returns:
             List of matching non-deleted orders
         """
-        clauses = [self.model.deleted_at.is_(None)]  # Only include non-deleted orders
+        return db.session.execute(self._search_query(cust, title)).scalars().all()
 
-        if cust:
-            clauses.append(self.model.cust.ilike(f'%{cust}%'))
-
-        if title:
-            clauses.append(self.model.title.ilike(f'%{title}%'))
-
-        # Query for orders matching the search criteria
-        orders_query = db.select(self.model).where(and_(*clauses)).order_by(self.model.datin.desc(), self.model.cust.desc())
-        return db.session.execute(orders_query).scalars().all()
+    def search_paginated(
+        self,
+        cust: str,
+        title: str,
+        page: int,
+        per_page: int,
+        sort_argument: Optional[str] = None,
+    ) -> Pagination:
+        """Return one database-paginated page of matching orders."""
+        query = self._search_query(cust, title)
+        if sort_argument:
+            query = self.apply_sort(query.order_by(None), sort_argument)
+        return db.paginate(
+            self._with_list_projection(query),
+            page=page,
+            per_page=per_page,
+            error_out=False,
+        )
 
     def filter(self, search: Optional[str] = None) -> Any:
         """
@@ -82,7 +124,9 @@ class OrderRepository(BaseRepository[Order]):
             Filtered query object with only non-deleted orders
         """
         # Start with a query that filters out deleted records
-        query = db.select(self.model).filter(self.model.deleted_at.is_(None))
+        query = self._with_list_projection(
+            db.select(self.model).filter(self.model.deleted_at.is_(None))
+        )
 
         if search:
             query = query.filter(or_(
@@ -102,17 +146,29 @@ class OrderRepository(BaseRepository[Order]):
         Returns:
             Sorted query object
         """
-        if sort_argument:
-            sort_order = []
-            for s in sort_argument.split(','):
-                if s.startswith('-'):
-                    field_name = s[1:]
-                    sort_order.append(getattr(self.model, field_name).desc())
-                else:
-                    field_name = s
-                    sort_order.append(getattr(self.model, field_name))
-            query = query.order_by(*sort_order)
-        return query
+        if not sort_argument:
+            return query
+
+        sort_order = []
+        sort_fields = set()
+        for raw_term in sort_argument.split(','):
+            term = raw_term.strip()
+            if not term:
+                raise ValueError('Sort terms must specify a supported order field')
+
+            direction = term[0] if term[0] in '+-' else '+'
+            field_name = term[1:] if term[0] in '+-' else term
+            if field_name not in SORTABLE_ORDER_FIELDS:
+                raise ValueError(f'Unsupported sort field: {field_name or term}')
+
+            field = getattr(self.model, field_name)
+            sort_order.append(field.desc() if direction == '-' else field.asc())
+            sort_fields.add(field_name)
+
+        if 'id' not in sort_fields:
+            sort_order.append(self.model.id.desc())
+
+        return query.order_by(*sort_order)
 
     def paginate(self, query: Any, page: int, per_page: int) -> Pagination:
         """
@@ -161,7 +217,7 @@ class OrderRepository(BaseRepository[Order]):
                 raise TypeError(f"end must be a date object or a string in YYYY-MM-DD format, got {type(end)}")
 
         # Query for orders due out within the date range
-        duesql = db.select(self.model)
+        duesql = self._with_list_projection(db.select(self.model))
         # Filter out deleted records
         duesql = duesql.where(self.model.deleted_at.is_(None))
         duesql = duesql.where((self.model.logtype == "TR") | (self.model.logtype == "DP") | (self.model.logtype == "AA") | (self.model.logtype == "DTF"))
