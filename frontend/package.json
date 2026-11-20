@@ -13,7 +13,7 @@
     "gen:api": "openapi-typescript openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.9.2",
+    "@hookform/resolvers": "^7.0.0",
     "@tanstack/react-query": "^5.83.0",
     "@tanstack/react-table": "^8.21.3",
     "bootstrap": "^5.3.8",
